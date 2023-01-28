@@ -11,8 +11,8 @@
 
 int main(int argc, char *argv[]){
 	if(argc < 5 || argc > 7){
-		printf("USAGE: \n\tbadger-fortune -f <file> -n <number> (optionally: -o <output file>)	\
-		\n\t\t OR \n\tbadger-fortune -f <file> -b <batch file> (optionally: -o <output file>)\n");
+		printf("USAGE: \n\tbadger-fortune -f <file> -n <number> (optionally: -o <output file>) "
+		"\n\t\t OR \n\tbadger-fortune -f <file> -b <batch file> (optionally: -o <output file>)\n");
 		return 1;
 	}
 
@@ -33,7 +33,7 @@ int main(int argc, char *argv[]){
 				FILE *fortuneFile = NULL;
 				FILE *outputFile = NULL;
 	/* Looping until the return value is -1 i.e., no more arguments to parse */
-	while((argument = getopt(argc, argv, "f:n:b:o:")) != -1){
+	while((argument = getopt(argc, argv, "+f:n:b:o:")) != -1){
 		switch(argument){
 			case 'f':
 				/* optF = 1; */
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]){
 
 			case '?':
 				printf("ERROR: Invalid Flag Types\n");
-				break;
+				return 1;
 		}
 	}
 
