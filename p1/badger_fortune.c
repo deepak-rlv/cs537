@@ -1,3 +1,8 @@
+/*
+	Written by Deepak Charan Logavaseekaran 
+	UW Madison - CS537 - SP23 
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,24 +108,24 @@ int main(int argc, char *argv[]){
 		printf("ERROR: No fortune file was provided\n");
 		return 1;
 	}
-
-	char totalFortunes_string[10];
-	char maximumFortuneLength_string[10];
-
+	
 	fortuneFile = fopen(fortuneFileName,"r");
 	if(fortuneFile == NULL){
 		printf("ERROR: Can't open fortune file\n");
 		return 1;
 	}
 
-	if(fgets(totalFortunes_string,10,fortuneFile) == NULL){		//change to get line
+	int totalFortunes = 0;
+	int maximumFortuneLength = 0;
+
+	if(fscanf(fortuneFile, "%d\n", &totalFortunes) == EOF){
 		printf("ERROR: Fortune File Empty\n");
 		return 1;
 	}
-	if(fgets(maximumFortuneLength_string,10,fortuneFile));		//change to get line
-
-	const int maximumFortuneLength = atoi(maximumFortuneLength_string);
-	const int totalFortunes = atoi(totalFortunes_string);
+	if(fscanf(fortuneFile, "%d\n", &maximumFortuneLength) != 1){
+		printf("ERROR: Maximum Fortune Size not as per format\n");
+		return 1;
+	}
 
 	if(optN){
 		if(fortuneNumber <= 0 || fortuneNumber > totalFortunes){
