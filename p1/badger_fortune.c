@@ -106,103 +106,80 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 
-	if(fgets(totalFortunes_string,10,fortuneFile));		//change to get line
+	if(fgets(totalFortunes_string,10,fortuneFile) == NULL){		//change to get line
+		printf("ERROR: Fortune File Empty\n");
+		return 1;
+	}
 	if(fgets(maximumFortuneLength_string,10,fortuneFile));		//change to get line
 
 	const int maximumFortuneLength = atoi(maximumFortuneLength_string);
-	int fortunesHit = 0; //deontes the head of the fortune and not tail
+	const int totalFortunes = atoi(totalFortunes_string);
+
+	if(optN){
+		if(numberOfFortunes <= 0 || numberOfFortunes > totalFortunes){
+			printf("ERROR: Invalid Fortune Number\n");
+			return 1;
+		}
+	}
+
+	int fortunesHit = 0; //denotes the head of the fortune and not tail
 
 	char readCharacter[2];
 	readCharacter[1] = '\0';
 
+	char fortunesList[totalFortunes][maximumFortuneLength];
+
+    for(int i = 0, j = 0; i < totalFortunes; ){
+        while(1){
+            readCharacter[0] = fgetc(fortuneFile);
+            if(readCharacter[0] == '%'){
+                readCharacter[0] = fgetc(fortuneFile);
+                if(readCharacter[0] == '\n'){
+                    fortunesHit++;
+                    break;
+                }
+                else{
+                    readCharacter[0] = fgetc(fortuneFile);
+                    fortunesList[i][j] = readCharacter[0];
+                    j++;
+                }
+            }
+            else{
+                fortunesList[i][j] = readCharacter[0];
+                j++;
+            }
+        }
+        if(fortunesHit > 1){
+            j = 0;
+            i++;
+        }
+    }
+
 	if(optN){
-		for(int i = 0; i < numberOfFortunes; ){
-			while(1){
-				readCharacter[0] = fgetc(fortuneFile);
-				if(readCharacter[0] == '%'){
-					readCharacter[0] = fgetc(fortuneFile);
-					if(readCharacter[0] == '\n'){
-						fortunesHit++;
-						break;
-					}
-					else{
-						readCharacter[0] = fgetc(fortuneFile);
-						if(!optO){
-							printf("%c",readCharacter[0]);
-						}
-						else{
-							fputc(readCharacter[0],outputFile);
-						}
-					}
-				}
-				else{
-					if(!optO){
-						printf("%c",readCharacter[0]);
-					}
-					else{
-						fputc(readCharacter[0],outputFile);
-					}
-				}
-			}
-			if(fortunesHit > 1){
-				if(!optO){
-					printf("\n\n");
-				}
-				else{
-					fputs("\n\n",outputFile);
-				}
-				i++;
-			}
-		}
+		for(int i = 0; i < numberOfFortunes; i++)
+            printf("%s\n\n", fortunesList[i]);
 	}
 	else if(optB){
-		batchFile = fopen(batchFileName,"r");
+		batchFile = fopen(batchFileName, "r");
 		if(batchFile == NULL){
 			printf("ERROR: Can't open batch file\n");
 			return 1;
 		}
 
-		// int fortuneNumber = 0;
-		for(int i = 0; i < numberOfFortunes; i++){
-			while(1){
-				readCharacter[0] = fgetc(fortuneFile);
-				if(readCharacter[0] == '%'){
-					readCharacter[0] = fgetc(fortuneFile);
-					if(readCharacter[0] == '\n'){
-						fortunesHit++;
-						break;
-					}
-					else{
-						readCharacter[0] = fgetc(fortuneFile);
-						if(!optO){
-							printf("%c",readCharacter[0]);
-						}
-						else{
-							fputc(readCharacter[0],outputFile);
-						}
-					}
-				}
-				else{
-					if(!optO){
-						printf("%c",readCharacter[0]);
-					}
-					else{
-						fputc(readCharacter[0],outputFile);
-					}
-				}
-			}
-			if(fortunesHit > 1){
-				if(!optO){
-					printf("\n\n");
-				}
-				else{
-					fputs("\n\n",outputFile);
-				}
-				i++;
-			}
+		int fortuneNumber = 0;
+
+		if(fscanf(batchFile, "%d", &fortuneNumber) == EOF){
+			printf("ERROR: Batch File Empty\n");
+			return 1;
 		}
+
+        do{
+			if(fortuneNumber <= 0 || fortuneNumber > totalFortunes)
+				printf("ERROR: Invalid Fortune Number\n");
+        	printf("%s\n\n", fortunesList[fortuneNumber - 1]);
+		} while(fscanf(batchFile, "%d", &fortuneNumber) != EOF);
 	}
-	
+
 
 	#if DEBUG
 		const int totalFortunes = atoi(totalFortunes_string);
@@ -211,6 +188,8 @@ int main(int argc, char *argv[]){
 	#endif
 
 	fclose(fortuneFile);
+	if(optB)
+		fclose(batchFile);
 	if(optO)
 		fclose(outputFile);
 	
