@@ -62,7 +62,6 @@ int main(int argc, char *argv[]){
 					printf("Number of fortunes: %d\n", numberOfFortunes);
 				#endif
 
-				numberOfFortunes++;
 				break;
 
 			case 'b':
@@ -111,35 +110,48 @@ int main(int argc, char *argv[]){
 	if(fgets(maximumFortuneLength_string,10,fortuneFile));		//change to get line
 
 	const int maximumFortuneLength = atoi(maximumFortuneLength_string);
+	int fortunesHit = 0; //deontes the head of the fortune and not tail
 
 	char readCharacter[2];
 	readCharacter[1] = '\0';
 
 	if(optN){
-		for(int i = 0; i < numberOfFortunes; i++){
-			char fortune[maximumFortuneLength];
-			while(strlen(fortune) < maximumFortuneLength){
+		for(int i = 0; i < numberOfFortunes; ){
+			while(1){
 				readCharacter[0] = fgetc(fortuneFile);
 				if(readCharacter[0] == '%'){
 					readCharacter[0] = fgetc(fortuneFile);
 					if(readCharacter[0] == '\n'){
+						fortunesHit++;
 						break;
 					}
 					else{
 						readCharacter[0] = fgetc(fortuneFile);
-						strcat(fortune,readCharacter);
+						if(!optO){
+							printf("%c",readCharacter[0]);
+						}
+						else{
+							fputc(readCharacter[0],outputFile);
+						}
 					}
 				}
 				else{
-						strcat(fortune,readCharacter);
+					if(!optO){
+						printf("%c",readCharacter[0]);
+					}
+					else{
+						fputc(readCharacter[0],outputFile);
+					}
 				}
 			}
-			if(!optO){
-				if(strlen(fortune)!=0)
-					printf("%s\n\n",fortune);
-			}
-			else{
-				//write to -o file
+			if(fortunesHit > 1){
+				if(!optO){
+					printf("\n\n");
+				}
+				else{
+					fputs("\n\n",outputFile);
+				}
+				i++;
 			}
 		}
 	}
@@ -149,30 +161,44 @@ int main(int argc, char *argv[]){
 			printf("ERROR: Can't open batch file\n");
 			return 1;
 		}
-		for(int i = 0; i < numberOfFortunes; i++){ // use getline in the for loop to iterate through all the fortunes
-			char fortune[maximumFortuneLength];
-			while(strlen(fortune) < maximumFortuneLength){
+
+		// int fortuneNumber = 0;
+		for(int i = 0; i < numberOfFortunes; i++){
+			while(1){
 				readCharacter[0] = fgetc(fortuneFile);
 				if(readCharacter[0] == '%'){
 					readCharacter[0] = fgetc(fortuneFile);
 					if(readCharacter[0] == '\n'){
+						fortunesHit++;
 						break;
 					}
 					else{
 						readCharacter[0] = fgetc(fortuneFile);
-						strcat(fortune,readCharacter);
+						if(!optO){
+							printf("%c",readCharacter[0]);
+						}
+						else{
+							fputc(readCharacter[0],outputFile);
+						}
 					}
 				}
 				else{
-						strcat(fortune,readCharacter);
+					if(!optO){
+						printf("%c",readCharacter[0]);
+					}
+					else{
+						fputc(readCharacter[0],outputFile);
+					}
 				}
 			}
-			if(!optO){
-				if(strlen(fortune)!=0)
-					printf("%s\n\n",fortune);
-			}
-			else{
-				//write to -o file
+			if(fortunesHit > 1){
+				if(!optO){
+					printf("\n\n");
+				}
+				else{
+					fputs("\n\n",outputFile);
+				}
+				i++;
 			}
 		}
 	}
