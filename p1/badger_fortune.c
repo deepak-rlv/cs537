@@ -134,7 +134,7 @@ int main(int argc, char *argv[]){
 	char readCharacter[2];
 	readCharacter[1] = '\0';
 
-	char fortunesList[totalFortunes][maximumFortuneLength]; //change to malloc allocation
+	char *fortunesList = malloc(totalFortunes * maximumFortuneLength * sizeof(char));
 
     for(int i = 0, j = 0; i < totalFortunes; ){
         while(1){
@@ -147,12 +147,12 @@ int main(int argc, char *argv[]){
                 }
                 else{
                     readCharacter[0] = fgetc(fortuneFile);
-                    fortunesList[i][j] = readCharacter[0];
+                    fortunesList[i * maximumFortuneLength + j] = readCharacter[0];
                     j++;
                 }
             }
             else{
-                fortunesList[i][j] = readCharacter[0];
+                fortunesList[i * maximumFortuneLength + j] = readCharacter[0];
                 j++;
             }
         }
@@ -163,7 +163,7 @@ int main(int argc, char *argv[]){
     }
 
 	if(optN){
-		printf("%s", fortunesList[fortuneNumber - 1]);
+		printf("%s", &fortunesList[(fortuneNumber - 1) * maximumFortuneLength]);
 	}
 	else if(optB){
 		batchFile = fopen(batchFileName, "r");
@@ -183,7 +183,7 @@ int main(int argc, char *argv[]){
 			if(fortuneNumber <= 0 || fortuneNumber > totalFortunes)
 				printf("ERROR: Invalid Fortune Number\n\n");
 			else
-        		printf("%s\n\n", fortunesList[fortuneNumber - 1]);
+        		printf("%s\n\n", &fortunesList[(fortuneNumber - 1) * maximumFortuneLength]);
 		} while(fscanf(batchFile, "%d", &fortuneNumber) != EOF);
 	}
 
@@ -193,6 +193,7 @@ int main(int argc, char *argv[]){
 		printf("%d\n",maximumFortuneLength);
 	#endif
 
+	free(fortunesList);
 	fclose(fortuneFile);
 	if(optB)
 		fclose(batchFile);
