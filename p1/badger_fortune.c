@@ -28,10 +28,12 @@ int main(int argc, char *argv[]){
 
 	bool /* optF = 0, */ optN = 0, optB = 0, optO = 0;
 	char fortuneFileName[255];
+	char batchFileName[255];
 	int numberOfFortunes = 0;
 
 				FILE *fortuneFile = NULL;
 				FILE *outputFile = NULL;
+				FILE *batchFile = NULL;
 	/* Looping until the return value is -1 i.e., no more arguments to parse */
 	while((argument = getopt(argc, argv, "+f:n:b:o:")) != -1){
 		switch(argument){
@@ -66,20 +68,17 @@ int main(int argc, char *argv[]){
 			case 'b':
 				optB = 1;
 
+				strcpy(batchFileName,optarg);
+
 				if(optN){
 					printf("ERROR: You can't use batch mode when specifying a fortune number using -n\n");
 					return 1;
 				}
-
-				FILE *batchFile;
-				batchFile = fopen(optarg,"r");
 				
 				#if DEBUG
 					printf("Batch File's name: %s\n",optarg);
 				#endif
 
-				if(batchFile == NULL)
-					printf("ERROR: Can't open batch file\n");
 				break;
 
 			case 'o':
@@ -107,6 +106,7 @@ int main(int argc, char *argv[]){
 		printf("ERROR: Can't open fortune file\n");
 		return 1;
 	}
+
 	if(fgets(totalFortunes_string,10,fortuneFile));		//change to get line
 	if(fgets(maximumFortuneLength_string,10,fortuneFile));		//change to get line
 
@@ -115,27 +115,68 @@ int main(int argc, char *argv[]){
 	char readCharacter[2];
 	readCharacter[1] = '\0';
 
-	for(int i = 0; i < numberOfFortunes; i++){
-		char fortune[maximumFortuneLength];
-		while(strlen(fortune) < maximumFortuneLength){
-			readCharacter[0] = fgetc(fortuneFile);
-			if(readCharacter[0] == '%'){
+	if(optN){
+		for(int i = 0; i < numberOfFortunes; i++){
+			char fortune[maximumFortuneLength];
+			while(strlen(fortune) < maximumFortuneLength){
 				readCharacter[0] = fgetc(fortuneFile);
-				if(readCharacter[0] == '\n'){
-					break;
+				if(readCharacter[0] == '%'){
+					readCharacter[0] = fgetc(fortuneFile);
+					if(readCharacter[0] == '\n'){
+						break;
+					}
+					else{
+						readCharacter[0] = fgetc(fortuneFile);
+						strcat(fortune,readCharacter);
+					}
 				}
 				else{
-					readCharacter[0] = fgetc(fortuneFile);
-					strcat(fortune,readCharacter);
+						strcat(fortune,readCharacter);
 				}
 			}
+			if(!optO){
+				if(strlen(fortune)!=0)
+					printf("%s\n\n",fortune);
+			}
 			else{
-					strcat(fortune,readCharacter);
+				//write to -o file
 			}
 		}
-		if(strlen(fortune)!=0)
-			printf("%s\n\n",fortune);
 	}
+	else if(optB){
+		batchFile = fopen(batchFileName,"r");
+		if(batchFile == NULL){
+			printf("ERROR: Can't open batch file\n");
+			return 1;
+		}
+		for(int i = 0; i < numberOfFortunes; i++){ // use getline in the for loop to iterate through all the fortunes
+			char fortune[maximumFortuneLength];
+			while(strlen(fortune) < maximumFortuneLength){
+				readCharacter[0] = fgetc(fortuneFile);
+				if(readCharacter[0] == '%'){
+					readCharacter[0] = fgetc(fortuneFile);
+					if(readCharacter[0] == '\n'){
+						break;
+					}
+					else{
+						readCharacter[0] = fgetc(fortuneFile);
+						strcat(fortune,readCharacter);
+					}
+				}
+				else{
+						strcat(fortune,readCharacter);
+				}
+			}
+			if(!optO){
+				if(strlen(fortune)!=0)
+					printf("%s\n\n",fortune);
+			}
+			else{
+				//write to -o file
+			}
+		}
+	}
+	
 
 	#if DEBUG
 		const int totalFortunes = atoi(totalFortunes_string);
