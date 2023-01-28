@@ -26,19 +26,21 @@ int main(int argc, char *argv[]){
 	/* Variable to hold the command line argument (if present) else hold the error returned by the function */
 	int argument;
 
-	bool /* optF = 0, */ optN = 0, optB = 0, optO = 0;
+	int fortuneNumber = 0;
+
+	bool optF = 0, optN = 0, optB = 0, optO = 0;
 	char fortuneFileName[255];
 	char batchFileName[255];
-	int numberOfFortunes = 0;
 
-				FILE *fortuneFile = NULL;
-				FILE *outputFile = NULL;
-				FILE *batchFile = NULL;
+	FILE *fortuneFile = NULL;
+	FILE *outputFile = NULL;
+	FILE *batchFile = NULL;
+
 	/* Looping until the return value is -1 i.e., no more arguments to parse */
 	while((argument = getopt(argc, argv, "+f:n:b:o:")) != -1){
 		switch(argument){
 			case 'f':
-				/* optF = 1; */
+				optF = 1;
 
 				strcpy(fortuneFileName,optarg);
 
@@ -56,10 +58,10 @@ int main(int argc, char *argv[]){
 					return 1;
 				}
 
-				numberOfFortunes = atoi(optarg);
+				fortuneNumber = atoi(optarg);
 
 				#if DEBUG
-					printf("Number of fortunes: %d\n", numberOfFortunes);
+					printf("Fortune Number: %d\n", fortuneNumber);
 				#endif
 
 				break;
@@ -97,6 +99,11 @@ int main(int argc, char *argv[]){
 		}
 	}
 
+	if(!optF){
+		printf("ERROR: No fortune file was provided\n");
+		return 1;
+	}
+
 	char totalFortunes_string[10];
 	char maximumFortuneLength_string[10];
 
@@ -116,7 +123,7 @@ int main(int argc, char *argv[]){
 	const int totalFortunes = atoi(totalFortunes_string);
 
 	if(optN){
-		if(numberOfFortunes <= 0 || numberOfFortunes > totalFortunes){
+		if(fortuneNumber <= 0 || fortuneNumber > totalFortunes){
 			printf("ERROR: Invalid Fortune Number\n");
 			return 1;
 		}
@@ -127,7 +134,7 @@ int main(int argc, char *argv[]){
 	char readCharacter[2];
 	readCharacter[1] = '\0';
 
-	char fortunesList[totalFortunes][maximumFortuneLength];
+	char fortunesList[totalFortunes][maximumFortuneLength]; //change to malloc allocation
 
     for(int i = 0, j = 0; i < totalFortunes; ){
         while(1){
@@ -156,8 +163,7 @@ int main(int argc, char *argv[]){
     }
 
 	if(optN){
-		for(int i = 0; i < numberOfFortunes; i++)
-            printf("%s\n\n", fortunesList[i]);
+		printf("%s", fortunesList[fortuneNumber - 1]);
 	}
 	else if(optB){
 		batchFile = fopen(batchFileName, "r");
@@ -166,7 +172,7 @@ int main(int argc, char *argv[]){
 			return 1;
 		}
 
-		int fortuneNumber = 0;
+		fortuneNumber = 0;
 
 		if(fscanf(batchFile, "%d", &fortuneNumber) == EOF){
 			printf("ERROR: Batch File Empty\n");
@@ -175,14 +181,14 @@ int main(int argc, char *argv[]){
 
         do{
 			if(fortuneNumber <= 0 || fortuneNumber > totalFortunes)
-				printf("ERROR: Invalid Fortune Number\n");
-        	printf("%s\n\n", fortunesList[fortuneNumber - 1]);
+				printf("ERROR: Invalid Fortune Number\n\n");
+			else
+        		printf("%s\n\n", fortunesList[fortuneNumber - 1]);
 		} while(fscanf(batchFile, "%d", &fortuneNumber) != EOF);
 	}
 
 
 	#if DEBUG
-		const int totalFortunes = atoi(totalFortunes_string);
 		printf("%d\n",totalFortunes);
 		printf("%d\n",maximumFortuneLength);
 	#endif
