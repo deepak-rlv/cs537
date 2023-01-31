@@ -155,8 +155,17 @@ int main(int argc, char *argv[]){
 		}
 	}
 
+	#if DEBUG
+		printf("Total Fortunes in %s: %d\n", fortuneFileName, totalFortunes);
+		printf("Length of the longest fortune: %d\n\n", maximumFortuneLength);
+	#endif
+
 	/* Holds the list of all fortunes available in the fortune file */
 	char *fortunesList = malloc(totalFortunes * maximumFortuneLength * sizeof(char));
+	if(fortunesList == NULL){
+		printf("Can't allocate memory\n");
+		return 1;
+	}
 
 	/*
 		Loops through and stores the entire fortune.txt file in fortunesList
@@ -190,9 +199,19 @@ int main(int argc, char *argv[]){
         }
     }
 
+	/*
+		Offset for the fortunesList in 1D form
+		Using fortuneNumber-1 since index start from 0
+	*/
+	int listOffset = (fortuneNumber - 1) * maximumFortuneLength;	
+
 	/* Print only one fortune as per input if -n is specified */
 	if(optN){
-		printf("%s", &fortunesList[(fortuneNumber - 1) * maximumFortuneLength]);	// Using fortuneNumber-1 since index start from 0
+		if(optO)
+			fprintf(outputFile, "%s", &fortunesList[listOffset]);	
+		else
+			printf("%s", &fortunesList[listOffset]);	
+
 	}
 	else if(optB){
 		batchFile = fopen(batchFileName, "r");
@@ -214,21 +233,22 @@ int main(int argc, char *argv[]){
 			if the previous if condition fails
 		*/
         do{
+			listOffset = (fortuneNumber - 1) * maximumFortuneLength;
 			/* Print error message and continue if batch file has argument <= 0 or more than the total available fortunes */
 			if(fortuneNumber <= 0 || fortuneNumber > totalFortunes)
 				printf("ERROR: Invalid Fortune Number\n\n");
-			else
-        		printf("%s\n\n", &fortunesList[(fortuneNumber - 1) * maximumFortuneLength]);	// Using fortuneNumber-1 since index start from 0
+			else{
+				if(optO)
+        			fprintf(outputFile, "%s\n\n", &fortunesList[listOffset]);	
+        		else
+					printf("%s\n\n", &fortunesList[listOffset]);	
+			}
 		} while(fscanf(batchFile, "%d", &fortuneNumber) != EOF);
 	}
 
-
-	#if DEBUG
-		printf("%d\n",totalFortunes);
-		printf("%d\n",maximumFortuneLength);
-	#endif
-
+	/* Freeing memory and closing open files */
 	free(fortunesList);
+
 	fclose(fortuneFile);
 	if(optB)
 		fclose(batchFile);
