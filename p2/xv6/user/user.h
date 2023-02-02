@@ -26,6 +26,9 @@ char* sbrk(int);
 int sleep(int);
 int uptime(void);
 
+// Written by Deepak for CS537 - P2
+int getnextpid(void);
+
 // user library functions (ulib.c)
 int stat(char*, struct stat*);
 char* strcpy(char*, char*);

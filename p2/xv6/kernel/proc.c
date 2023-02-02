@@ -19,6 +19,11 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+// Written by Deepak for CS537 - P2
+int getnextpid(void){
+  return nextpid;
+}
+
 void
 pinit(void)
 {

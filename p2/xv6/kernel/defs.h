@@ -109,6 +109,8 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+// Written by Deepak for CS537 - P2
+int             getnextpid(void);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

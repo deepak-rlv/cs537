@@ -24,4 +24,7 @@
 #define SYS_sleep  20
 #define SYS_uptime 21
 
+// Written by Deepak for CS537 - P2
+#define SYS_getnextpid 22
+
 #endif // _SYSCALL_H_

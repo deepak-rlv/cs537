@@ -88,3 +88,8 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+// Written by Deepak for CS537 - P2
+int sys_getnextpid(void){
+  return getnextpid();
+}

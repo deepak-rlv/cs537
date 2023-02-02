@@ -24,4 +24,7 @@ int sys_wait(void);
 int sys_write(void);
 int sys_uptime(void);
 
+// Written by Deepak for CS537 - P2
+int sys_getnextpid(void);
+
 #endif // _SYSFUNC_H_
