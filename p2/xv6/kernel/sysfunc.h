@@ -26,5 +26,6 @@ int sys_uptime(void);
 
 // Written by Deepak for CS537 - P2
 int sys_getnextpid(void);
+int sys_getprocstate(void);
 
 #endif // _SYSFUNC_H_

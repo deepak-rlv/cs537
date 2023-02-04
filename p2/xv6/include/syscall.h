@@ -26,5 +26,6 @@
 
 // Written by Deepak for CS537 - P2
 #define SYS_getnextpid 22
+#define SYS_getprocstate 23
 
 #endif // _SYSCALL_H_

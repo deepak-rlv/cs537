@@ -93,3 +93,20 @@ sys_uptime(void)
 int sys_getnextpid(void){
   return getnextpid();
 }
+
+int sys_getprocstate(void){
+  int pid, n;
+  char *state = NULL;
+
+  /*
+    First argument of argint & argptr is the nth argument in the system call
+    the 2nd argument in argptr is the pointer of size 'n', the 3rd argument
+  */
+  if(argint(0, &pid) < 0 || argint(2, &n) < 0 || argptr(1, (void *)&state, n) < 0)
+    return -1;
+  
+  if(pid < 0 || n < 0)
+    return -1;
+
+  return getprocstate(pid, state, n);
+}

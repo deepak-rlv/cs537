@@ -32,3 +32,4 @@ SYSCALL(uptime)
 
 // Written by Deepak for CS537 - P2
 SYSCALL(getnextpid)
+SYSCALL(getprocstate)

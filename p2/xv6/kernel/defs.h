@@ -111,6 +111,7 @@ void            wakeup(void*);
 void            yield(void);
 // Written by Deepak for CS537 - P2
 int             getnextpid(void);
+int             getprocstate(int, char*, int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

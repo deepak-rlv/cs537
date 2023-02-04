@@ -24,6 +24,46 @@ int getnextpid(void){
   return nextpid;
 }
 
+int getprocstate(int pid, char* state, int n){
+  /*
+    *states adopted from procdump()
+  */
+  static char *states[] = {
+  [UNUSED]    "unused",
+  [EMBRYO]    "embryo",
+  [SLEEPING]  "sleep ",
+  [RUNNABLE]  "runble",
+  [RUNNING]   "run   ",
+  [ZOMBIE]    "zombie"
+  };
+
+  struct proc *p;
+  int processFound = 0;
+  /* Pointer to hold the state of the process before copying */
+  char *dummy;
+
+  acquire(&ptable.lock);  
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if((p->pid == pid)){ // Checking for pid hit
+      processFound ++;
+      dummy = states[p->state]; // Copying state into dummy
+
+      while(*dummy != '\0'){
+        *state = *dummy;
+        state ++;
+        dummy ++;
+      }
+      *state = '\0';
+      break;
+    }
+  }
+  release(&ptable.lock);
+
+  if(!processFound)
+    return -1;
+  return 0;
+}
+
 void
 pinit(void)
 {

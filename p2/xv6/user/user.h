@@ -28,6 +28,7 @@ int uptime(void);
 
 // Written by Deepak for CS537 - P2
 int getnextpid(void);
+int getprocstate(int, char*, int);
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);

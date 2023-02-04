@@ -104,7 +104,8 @@ static int (*syscalls[])(void) = {
 [SYS_write]   sys_write,
 [SYS_uptime]  sys_uptime,
 // Written by Deepak for CS537 - P2
-[SYS_getnextpid]  sys_getnextpid
+[SYS_getnextpid]  sys_getnextpid,
+[SYS_getprocstate]  sys_getprocstate
 };
 
 // Called on a syscall trap. Checks that the syscall number (passed via eax)

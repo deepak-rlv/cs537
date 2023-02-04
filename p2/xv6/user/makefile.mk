@@ -4,8 +4,6 @@ USER_PROGS := \
 	cat\
 	echo\
 	forktest\
-	getnextpid\
-	getprocstate\
 	grep\
 	init\
 	kill\
