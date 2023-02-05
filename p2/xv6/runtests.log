@@ -23,15 +23,15 @@ ld  -m    elf_i386 -nostdlib --omagic \
 dd if=/dev/zero of=xv6.img count=10000
 10000+0 records in
 10000+0 records out
-5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.0446916 s, 115 MB/s
+5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.0338629 s, 151 MB/s
 dd if=kernel/bootblock of=xv6.img conv=notrunc
 1+0 records in
 1+0 records out
-512 bytes copied, 0.000117666 s, 4.4 MB/s
+512 bytes copied, 0.000197803 s, 2.6 MB/s
 dd if=kernel/kernel of=xv6.img seek=1 conv=notrunc
 268+1 records in
 268+1 records out
-137248 bytes (137 kB, 134 KiB) copied, 0.00123796 s, 111 MB/s
+137248 bytes (137 kB, 134 KiB) copied, 0.000901962 s, 152 MB/s
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o user/p2test.o user/p2test.c
 ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --output=user/bin/p2test user/p2test.o user/ulib.o user/usys.o user/printf.o user/umalloc.o
 cp user/bin/p2test fs/p2test
