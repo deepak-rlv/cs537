@@ -33,25 +33,39 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
 }
 
 int actionHandler(char * singleCommand){
+    char * original = strdup(singleCommand);
     char **args = malloc(sizeof(char) * (strlen(singleCommand) + 1));
 
     int numOfArgs = stringSplitter(args, singleCommand, " \n\t") - 1;
+
 
     if(!strcmp(args[0],"exit")){
         exit(0);
     } else if(!strcmp(args[0], "cd")){
         if(numOfArgs > 1 || numOfArgs == 0){
-            printf("cd arguments error\n");
+            #if debug
+                printf("cd arguments error\n");
+            #endif
         } else {
             int chdirReturn = chdir(args[1]);
             if(chdirReturn < 0){
-                printf("chdir error\n");
+                #if debug
+                    printf("chdir error\n");
+                #endif
             }
         }
     } else if(!strcmp(args[0], "pwd")){
         char currentDir[PWD_SIZE];
         if(!getcwd(currentDir, PWD_SIZE));
         printf("%s\n", currentDir);
+    } else if(!strcmp(args[0], "loop")){
+        int interations = atoi(args[1]);
+        char *loopArgs = strstr(original, args[2]);
+        free(args);
+        for(int i = 0; i < interations; i++){
+            actionHandler(loopArgs);
+        }
+        return 1;
     } else {
         int forkReturn = fork();
         if(forkReturn < 0){
@@ -115,8 +129,19 @@ int main(int argc, char *argv[]){
         char **multipleCommands = malloc(sizeof(char) * (strlen(prompt) + 1));
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-        for(int i = 0; i < numberOfCommands; i++)
-            actionHandler(multipleCommands[i]);
+        for(int i = 0; i < numberOfCommands; i++){
+            char **individualCommands = malloc(sizeof(char) * (strlen(multipleCommands[i]) + 1));
+            char * ifRedirect = strchr(multipleCommands[i], '>');
+            if(ifRedirect == NULL)
+                actionHandler(multipleCommands[i]);
+            else{
+                int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
+                freopen(individualCommands[1], "a", stdout);
+                actionHandler(individualCommands[0]);
+                fflush(stdout);
+            }
+            free(individualCommands);
+        }
         
         free(multipleCommands);
     }
