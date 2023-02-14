@@ -46,7 +46,6 @@ int actionHandler(char * singleCommand){
 
 
     if(!strcmp(args[0],"exit")){
-        printf("\n");
         exit(0);
     } else if(!strcmp(args[0], "cd")){
         if(numOfArgs > 1 || numOfArgs == 0){
@@ -67,7 +66,6 @@ int actionHandler(char * singleCommand){
         }
         free(args);
         return 0;
-
     } else if(!strcmp(args[0], "pwd")){
         char currentDir[PWD_SIZE];
         if(!getcwd(currentDir, PWD_SIZE));
@@ -183,8 +181,8 @@ int main(int argc, char *argv[]){
             #if debug
                 printf("Failed to read command.\n");
             #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-            return 1;
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            return 0;
         }
         prompt[charactersRead - 1] = '\0';   // Replacing the \n at the end of the prompt with \0
 

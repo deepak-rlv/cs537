@@ -1,0 +1,40 @@
+starting build
+
+**********************************************************************
+
+Test build
+compile smash.c
+
+**********************************************************************
+gcc smash.c -o smash
+
+
+test build PASSED (5 of 5)
+ (compile smash.c)
+
+starting badcd
+
+**********************************************************************
+
+Test badcd
+cd to a bad directory
+
+**********************************************************************
+/tmp/tmpdsezfvb1/p/./smash
+testing.test.Failure: ./smash gave incorrect standard output.
+Expected: "smash> smash>"
+Got:      "smash> smash> smash> smash> smash>"
+
+
+test badcd FAILED (0 of 5)
+ (cd to a bad directory)
+ ./smash gave incorrect standard output.
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/badcd/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/badcd
+ to compare your output with reference outputs. 
+
+Skipped 11 tests.
+To keep testing after failing a test, use flag '-c' or '--continue'
