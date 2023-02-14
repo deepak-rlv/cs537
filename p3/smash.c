@@ -34,6 +34,7 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
         command = strtok(NULL, delim);
         i++;
     }
+    free(command);
     return i;
 }
 
@@ -45,6 +46,7 @@ int actionHandler(char * singleCommand){
 
 
     if(!strcmp(args[0],"exit")){
+        printf("\n");
         exit(0);
     } else if(!strcmp(args[0], "cd")){
         if(numOfArgs > 1 || numOfArgs == 0){
@@ -58,10 +60,14 @@ int actionHandler(char * singleCommand){
                 #if debug
                     printf("chdir error\n");
                 #endif
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
-
+                write(STDERR_FILENO, error_message, strlen(error_message));
+                free(args);
+                return 0;
             }
         }
+        free(args);
+        return 0;
+
     } else if(!strcmp(args[0], "pwd")){
         char currentDir[PWD_SIZE];
         if(!getcwd(currentDir, PWD_SIZE));
@@ -164,7 +170,7 @@ int main(int argc, char *argv[]){
         write(STDERR_FILENO, error_message, strlen(error_message)); 
         return 1;
     }
-
+    
     size_t promptSize = 20;
     char *prompt = malloc(sizeof(char) * promptSize);
     
@@ -199,10 +205,11 @@ int main(int argc, char *argv[]){
                 continue;
         free(dummy);
 
-        int stdBackup = dup(fileno(stdout));
+        int stdOutBackup = dup(fileno(stdout));
+        int stdErrBackup = dup(fileno(stderr));
 
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
-        int fileHand;
+        
         for(int i = 0; i < numberOfCommands; i++){
             char **individualCommands = malloc(sizeof(char) * (strlen(multipleCommands[i]) + 1));
             if(!ifRedirect){
@@ -212,14 +219,19 @@ int main(int argc, char *argv[]){
                 while(isspace(*individualCommands[numOfCommands-1])){
                     individualCommands[numOfCommands-1] ++;
                 }
-                fileHand = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
-                dup2(fileHand, fileno(stdout));
+                int outFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+                int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+                dup2(outFileHandler, fileno(stdout));
+                dup2(errFileHandler, fileno(stderr));
                 actionHandler(multipleCommands[i]);
                 fflush(stdout); 
-                close(fileHand);
-                dup2(stdBackup, fileno(stdout));
-                close(stdBackup);
-                
+                fflush(stderr); 
+                close(outFileHandler);
+                close(errFileHandler);
+                dup2(stdOutBackup, fileno(stdout));
+                dup2(stdErrBackup, fileno(stderr));
+                close(stdOutBackup);
+                close(stdErrBackup);
             }
             free(individualCommands);
         }
