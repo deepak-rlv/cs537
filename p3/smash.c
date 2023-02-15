@@ -43,7 +43,7 @@ int actionHandler(char * singleCommand, int iter){
     char * original = strdup(singleCommand);
     char **args = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
 
-    int numOfArgs = stringSplitter(args, singleCommand, " \n\t") - 1;
+    int numOfArgs = stringSplitter(args, singleCommand, " \n\t\r") - 1;
 
     for(int loops = 0; loops < iter ; loops++){
         if(!strcmp(args[0],"exit")){
@@ -86,7 +86,7 @@ int actionHandler(char * singleCommand, int iter){
                         printf("Exec failed.\n");
                     #endif
 
-                    if(errno = EACCES){
+                    if(errno == EACCES){
                         //executable not found. Do not redirect to file
                     }
                     write(STDERR_FILENO, error_message, strlen(error_message)); 
@@ -131,12 +131,12 @@ int redirectHandler(char * redirectPointer, char * prompt){
 }
 
 int pipeHandler(char * pipePointer, char * prompt){
-    char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    /* char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-    for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
-        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "|");
+    for(int i = 0; i < numberOfCommands; i++){ */
+        char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+        int numOfCommands = stringSplitter(individualCommands, prompt, "|");
 
         if(numOfCommands == 1){
             #if debug
@@ -147,8 +147,8 @@ int pipeHandler(char * pipePointer, char * prompt){
             return 1;
         }
         free(individualCommands);
-    }
-    free(multipleCommands);
+    /* }
+    free(multipleCommands); */
     return 0;
 }
 
@@ -239,7 +239,7 @@ int main(int argc, char *argv[]){
                     individualCommands[numOfCommands-1] ++;
                 }
                 // individualCommands[numOfCommands - 1][strlen(individualCommands[numOfCommands - 1])-1]='\0';
-                individualCommands[numOfCommands - 1][strcspn(individualCommands[numOfCommands - 1], "\r\n\t")]='\0';
+                individualCommands[numOfCommands - 1][strcspn(individualCommands[numOfCommands - 1], " \r\n\t")]='\0';
                 int outFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 dup2(outFileHandler, fileno(stdout));
