@@ -20,21 +20,305 @@ Test badcd
 cd to a bad directory
 
 **********************************************************************
-/tmp/tmpdsezfvb1/p/./smash
-testing.test.Failure: ./smash gave incorrect standard output.
-Expected: "smash> smash>"
-Got:      "smash> smash> smash> smash> smash>"
+/tmp/tmppyjikh0q/p/./smash
 
 
-test badcd FAILED (0 of 5)
+test badcd PASSED (5 of 5)
  (cd to a bad directory)
+
+starting exec
+
+**********************************************************************
+
+Test exec
+path should be /bin
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+
+
+test exec PASSED (5 of 5)
+ (path should be /bin)
+
+starting badexec
+
+**********************************************************************
+
+Test badexec
+run programs that do not exist in /bin
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+testing.test.Failure: ./smash gave incorrect standard output.
+Expected: "smash> smash> smash> smash> smash>"
+Got:      "smash> smash> logavaseekaran\nsmash> smash> smash>"
+
+
+test badexec FAILED (0 of 5)
+ (run programs that do not exist in /bin)
  ./smash gave incorrect standard output.
 
  Test it yourself by running
- smash </home/cs537-1/tests/P3/badcd/in
+ smash </home/cs537-1/tests/P3/badexec/in
  and check out the test folder
- /home/cs537-1/tests/P3/badcd
+ /home/cs537-1/tests/P3/badexec
  to compare your output with reference outputs. 
 
-Skipped 11 tests.
-To keep testing after failing a test, use flag '-c' or '--continue'
+starting pwd
+
+**********************************************************************
+
+Test pwd
+pwd test
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+
+
+test pwd PASSED (5 of 5)
+ (pwd test)
+
+starting whitespace
+
+**********************************************************************
+
+Test whitespace
+leading and trailing whitespace, full whitespaces or empty string
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+
+
+test whitespace PASSED (5 of 5)
+ (leading and trailing whitespace, full whitespaces or empty string)
+
+starting rdr
+
+**********************************************************************
+
+Test rdr
+simple redirection with no standard error
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+
+test rdr FAILED (0 of 10)
+ (simple redirection with no standard error)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/rdr/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/rdr
+ to compare your output with reference outputs. 
+
+starting pipe
+
+**********************************************************************
+
+Test pipe
+simple pipe
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
+
+
+test pipe FAILED (0 of 15)
+ (simple pipe)
+ Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/pipe/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/pipe
+ to compare your output with reference outputs. 
+
+starting mul
+
+**********************************************************************
+
+Test mul
+running multiple commands at once
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+
+
+test mul PASSED (5 of 5)
+ (running multiple commands at once)
+
+starting loop
+
+**********************************************************************
+
+Test loop
+simple loop
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+
+
+test loop PASSED (15 of 15)
+ (simple loop)
+
+starting looprd
+
+**********************************************************************
+
+Test looprd
+simple redirection with loop
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+
+test looprd FAILED (0 of 15)
+ (simple redirection with loop)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/looprd/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/looprd
+ to compare your output with reference outputs. 
+
+starting piperd
+
+**********************************************************************
+
+Test piperd
+redirection with pipe
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+
+test piperd FAILED (0 of 15)
+ (redirection with pipe)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/piperd/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/piperd
+ to compare your output with reference outputs. 
+
+starting pipechain
+
+**********************************************************************
+
+Test pipechain
+chain pipe
+
+**********************************************************************
+/tmp/tmppyjikh0q/p/./smash
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
+
+
+test pipechain FAILED (0 of 15)
+ (chain pipe)
+ Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/pipechain/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/pipechain
+ to compare your output with reference outputs. 
+
+**********************************************************************
+Summary:
+test build PASSED (5 of 5)
+ (compile smash.c)
+
+test badcd PASSED (5 of 5)
+ (cd to a bad directory)
+
+test exec PASSED (5 of 5)
+ (path should be /bin)
+
+test badexec FAILED (0 of 5)
+ (run programs that do not exist in /bin)
+ ./smash gave incorrect standard output.
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/badexec/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/badexec
+ to compare your output with reference outputs. 
+
+test pwd PASSED (5 of 5)
+ (pwd test)
+
+test whitespace PASSED (5 of 5)
+ (leading and trailing whitespace, full whitespaces or empty string)
+
+test rdr FAILED (0 of 10)
+ (simple redirection with no standard error)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/rdr/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/rdr
+ to compare your output with reference outputs. 
+
+test pipe FAILED (0 of 15)
+ (simple pipe)
+ Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/pipe/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/pipe
+ to compare your output with reference outputs. 
+
+test mul PASSED (5 of 5)
+ (running multiple commands at once)
+
+test loop PASSED (15 of 15)
+ (simple loop)
+
+test looprd FAILED (0 of 15)
+ (simple redirection with loop)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/looprd/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/looprd
+ to compare your output with reference outputs. 
+
+test piperd FAILED (0 of 15)
+ (redirection with pipe)
+ missing redirected standard output outputfile
+ Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/piperd/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/piperd
+ to compare your output with reference outputs. 
+
+test pipechain FAILED (0 of 15)
+ (chain pipe)
+ Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
+
+ Test it yourself by running
+ smash </home/cs537-1/tests/P3/pipechain/in
+ and check out the test folder
+ /home/cs537-1/tests/P3/pipechain
+ to compare your output with reference outputs. 
+
+Passed 7 of 13 tests.
+Overall 7 of 13
+Points 45 of 120
