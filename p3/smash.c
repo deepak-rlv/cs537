@@ -46,80 +46,75 @@ int actionHandler(char * singleCommand, int iter){
     int numOfArgs = stringSplitter(args, singleCommand, " \n\t") - 1;
 
     for(int loops = 0; loops < iter ; loops++){
-    if(!strcmp(args[0],"exit")){
-        exit(0);
-    } else if(!strcmp(args[0], "cd")){
-        if(numOfArgs > 1 || numOfArgs == 0){
-            #if debug
-                printf("cd arguments error\n");
-            #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-        } else {
-            int chdirReturn = chdir(args[1]);
-            if(chdirReturn < 0){
+        if(!strcmp(args[0],"exit")){
+            exit(0);
+        } else if(!strcmp(args[0], "cd")){
+            if(numOfArgs > 1 || numOfArgs == 0){
                 #if debug
-                    printf("chdir error\n");
+                    printf("cd arguments error\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message)); 
+            } else {
+                int chdirReturn = chdir(args[1]);
+                if(chdirReturn < 0){
+                    #if debug
+                        printf("chdir error\n");
+                    #endif
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                }
+            }
+        } else if(!strcmp(args[0], "pwd")){
+            char currentDir[PWD_SIZE];
+            if(!getcwd(currentDir, PWD_SIZE));
+            printf("%s\n", currentDir);
+        } else if(!strcmp(args[0], "loop")){
+            int iterations = atoi(args[1]);
+            char * loopArgs = strstr(original, args[2]);
+            actionHandler(loopArgs, iterations);
+            return 1;
+        } else {
+            int forkReturn = fork();
+            if(forkReturn < 0){
+                #if debug
+                    printf("Fork failed\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
-            }
-        }
-        free(args);
-        return 0;
-    } else if(!strcmp(args[0], "pwd")){
-        char currentDir[PWD_SIZE];
-        if(!getcwd(currentDir, PWD_SIZE));
-        printf("%s\n", currentDir);
-    } else if(!strcmp(args[0], "loop")){
-        int iterations = atoi(args[1]);
-        char * loopArgs = strstr(original, args[2]);
-        actionHandler(loopArgs, iterations);
-        return 1;
-    } else {
-        int forkReturn = fork();
-        if(forkReturn < 0){
-            #if debug
-                printf("Fork failed\n");
-            #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-            free(args);
-            return 1;
-        } else if(forkReturn == 0){
-            int execReturn = execvp(args[0], args);
-            if (execReturn < 0){
-                #if debug
-                    printf("Exec failed.\n");
-                #endif
+            } else if(forkReturn == 0){
+                int execReturn = execvp(args[0], args);
+                if (execReturn < 0){
+                    #if debug
+                        printf("Exec failed.\n");
+                    #endif
 
-                if(errno = EACCES){
-                    //executable not found. Do not redirect to file
+                    if(errno = EACCES){
+                        //executable not found. Do not redirect to file
+                    }
+                    write(STDERR_FILENO, error_message, strlen(error_message)); 
+                    exit(0);
                 }
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
                 exit(0);
-            }
-            exit(0);
-        } else {
-            int waitReturn = wait(NULL);
-            if(waitReturn < 0){
-                #if debug
-                    printf("Wait failed\n");
-                #endif
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
-                free(args);
-                return 1;
+            } else {
+                int waitReturn = wait(NULL);
+                if(waitReturn < 0){
+                    #if debug
+                        printf("Wait failed\n");
+                    #endif
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                }
             }
         }
-    }}
+    }
     free(args);
     return 0;
 }
 
 int redirectHandler(char * redirectPointer, char * prompt){
-    char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    /* char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-    for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
-        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
+    for(int i = 0; i < numberOfCommands; i++){ */
+        char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+        int numOfCommands = stringSplitter(individualCommands, prompt, ">");
 
         if(numOfCommands == 1){
             #if debug
@@ -130,8 +125,8 @@ int redirectHandler(char * redirectPointer, char * prompt){
             return 1;
         }
         free(individualCommands);
-    }
-    free(multipleCommands);
+    /* }
+    free(multipleCommands); */
     return 0;
 }
 
@@ -166,6 +161,8 @@ int whiteSpaceCommand(char * prompt){
         return 1;
     return 0;
 }
+
+//ToDo check if number of iterations is provided with loops
 
 int main(int argc, char *argv[]){
     if(argc > 1){
@@ -204,7 +201,7 @@ int main(int argc, char *argv[]){
 
         char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
 
-        char * ifRedirect = strchr(prompt,'>');
+        /* char * ifRedirect = strchr(prompt,'>');
         char * ifPipe = strchr(prompt,'|');
         char * dummy = strdup(prompt);
         if(ifRedirect)
@@ -213,7 +210,7 @@ int main(int argc, char *argv[]){
         if(ifPipe)
             if(pipeHandler(ifPipe, dummy))
                 continue;
-        free(dummy);
+        free(dummy); */
 
         int stdOutBackup = dup(fileno(stdout));
         int stdErrBackup = dup(fileno(stderr));
@@ -222,6 +219,18 @@ int main(int argc, char *argv[]){
         
         for(int i = 0; i < numberOfCommands; i++){
             char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            char * ifRedirect = strchr(multipleCommands[i],'>');
+            char * ifPipe = strchr(multipleCommands[i],'|');
+            char * dummy = strdup(multipleCommands[i]);
+            if(ifRedirect)
+                if(redirectHandler(ifRedirect, dummy))
+                    continue;
+            if(ifPipe)
+                if(pipeHandler(ifPipe, dummy))
+                    continue;
+            free(dummy);
+            if(whiteSpaceCommand(multipleCommands[i]))
+                continue;
             if(!ifRedirect){
                 actionHandler(multipleCommands[i],1);
             } else {
@@ -229,6 +238,8 @@ int main(int argc, char *argv[]){
                 while(isspace(*individualCommands[numOfCommands-1])){
                     individualCommands[numOfCommands-1] ++;
                 }
+                // individualCommands[numOfCommands - 1][strlen(individualCommands[numOfCommands - 1])-1]='\0';
+                individualCommands[numOfCommands - 1][strcspn(individualCommands[numOfCommands - 1], "\r\n\t")]='\0';
                 int outFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 dup2(outFileHandler, fileno(stdout));
