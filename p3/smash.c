@@ -47,6 +47,7 @@ int actionHandler(char * singleCommand, int iter){
 
     for(int loops = 0; loops < iter ; loops++){
         if(!strcmp(args[0],"exit")){
+            printf("\n");
             exit(0);
         } else if(!strcmp(args[0], "cd")){
             if(numOfArgs > 1 || numOfArgs == 0){
@@ -80,7 +81,7 @@ int actionHandler(char * singleCommand, int iter){
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
             } else if(forkReturn == 0){
-                int execReturn = execvp(args[0], args);
+                int execReturn = execv(args[0], args);
                 if (execReturn < 0){
                     #if debug
                         printf("Exec failed.\n");
