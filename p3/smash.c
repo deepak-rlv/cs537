@@ -40,8 +40,7 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     return i;
 }
 
-int actionHandler(char * singleCommand, int iter){
-    char * original = strdup(singleCommand);
+int actionHandler(char * singleCommand){
     char **args = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
 
 
@@ -68,12 +67,7 @@ int actionHandler(char * singleCommand, int iter){
             char currentDir[PWD_SIZE];
             if(!getcwd(currentDir, PWD_SIZE));
             printf("%s\n", currentDir);
-        } /* else if(!strcmp(args[0], "loop")){
-            int iterations = atoi(args[1]);
-            char * loopArgs = strstr(original, args[2]);
-            actionHandler(loopArgs, iterations);
-            return 1;
-        } */ else {
+        } else {
             int forkReturn = fork();
             if(forkReturn < 0){
                 #if debug
@@ -163,6 +157,8 @@ int loopHandler(char *loopPointer, char * prompt, char * loopIterStr){
             break;
         }
     }
+    if(numOfCommands < 3) //should fail for loop & loop <num> cases
+        x = 1;
     if(x){
         #if debug
             printf("Loop iterations not specified\n");
@@ -171,7 +167,6 @@ int loopHandler(char *loopPointer, char * prompt, char * loopIterStr){
         free(individualCommands);
         return 1;
     }
-    strcpy(loopIterStr, individualCommands[1]);
     loopIter = atoi(individualCommands[1]);
     free(individualCommands);
     return 0;
@@ -253,10 +248,9 @@ int main(int argc, char *argv[]){
             if( multipleCommands[i][0] == 'l' &&
                 multipleCommands[i][1] == 'o' &&
                 multipleCommands[i][2] == 'o' &&
-                multipleCommands[i][3] == 'p' &&
-                whiteSpaceCommand(multipleCommands[i][4]) &&
-                isdigit(multipleCommands[i][5])
+                multipleCommands[i][3] == 'p'
             )
+                ifLoop = 1;
             char * dummy = strdup(multipleCommands[i]);
             if(ifRedirect)
                 if(redirectHandler(ifRedirect, dummy))
@@ -265,7 +259,7 @@ int main(int argc, char *argv[]){
                 if(pipeHandler(ifPipe, dummy))
                     continue;
             if(ifLoop){
-                char loopIterStr[11]; //since int max is 10 digits
+                char loopIterStr[11] = "\0"; //since int max is 10 digits
                 if(loopHandler(multipleCommands[i], dummy, loopIterStr))
                     continue;
                 multipleCommands[i]+=(6 + strlen(loopIterStr));
@@ -277,8 +271,8 @@ int main(int argc, char *argv[]){
 
             if(whiteSpaceCommand(multipleCommands[i]))
                 continue;
-            if(!ifRedirect){
-                actionHandler(multipleCommands[i],1);
+            if(!ifRedirect && !ifPipe){
+                actionHandler(multipleCommands[i]);
             } else {
                 int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
                 while(isspace(*individualCommands[numOfCommands-1])){
@@ -290,7 +284,7 @@ int main(int argc, char *argv[]){
                 int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 dup2(outFileHandler, fileno(stdout));
                 dup2(errFileHandler, fileno(stderr));
-                actionHandler(multipleCommands[i],1);
+                actionHandler(multipleCommands[i]);
                 fflush(stdout); 
                 fflush(stderr); 
                 close(outFileHandler);
