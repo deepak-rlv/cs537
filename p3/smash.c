@@ -25,6 +25,7 @@
 #include <unistd.h>
 
 const char error_message[30] = "An error has occurred\n";
+int loopIter=1;
 
 int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     char * command = strtok(prompt, delim);
@@ -43,11 +44,10 @@ int actionHandler(char * singleCommand, int iter){
     char * original = strdup(singleCommand);
     char **args = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
 
+
     int numOfArgs = stringSplitter(args, singleCommand, " \n\t\r") - 1;
 
-    for(int loops = 0; loops < iter ; loops++){
         if(!strcmp(args[0],"exit")){
-            printf("\n");
             exit(0);
         } else if(!strcmp(args[0], "cd")){
             if(numOfArgs > 1 || numOfArgs == 0){
@@ -68,12 +68,12 @@ int actionHandler(char * singleCommand, int iter){
             char currentDir[PWD_SIZE];
             if(!getcwd(currentDir, PWD_SIZE));
             printf("%s\n", currentDir);
-        } else if(!strcmp(args[0], "loop")){
+        } /* else if(!strcmp(args[0], "loop")){
             int iterations = atoi(args[1]);
             char * loopArgs = strstr(original, args[2]);
             actionHandler(loopArgs, iterations);
             return 1;
-        } else {
+        } */ else {
             int forkReturn = fork();
             if(forkReturn < 0){
                 #if debug
@@ -90,7 +90,7 @@ int actionHandler(char * singleCommand, int iter){
                     if(errno == EACCES){
                         //executable not found. Do not redirect to file
                     }
-                    write(STDERR_FILENO, error_message, strlen(error_message)); 
+                    write(STDERR_FILENO, error_message, strlen(error_message));
                     exit(0);
                 }
                 exit(0);
@@ -104,7 +104,7 @@ int actionHandler(char * singleCommand, int iter){
                 }
             }
         }
-    }
+    
     free(args);
     return 0;
 }
@@ -150,6 +150,30 @@ int pipeHandler(char * pipePointer, char * prompt){
         free(individualCommands);
     /* }
     free(multipleCommands); */
+    return 0;
+}
+
+int loopHandler(char *loopPointer, char * prompt, char * loopIterStr){
+    char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
+    int x=0;
+    for(int i=0; i<strlen(individualCommands[1]);i++){
+        if(!isdigit((individualCommands[1][i]))){
+            x=1;
+            break;
+        }
+    }
+    if(x){
+        #if debug
+            printf("Loop iterations not specified\n");
+        #endif
+        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        free(individualCommands);
+        return 1;
+    }
+    strcpy(loopIterStr, individualCommands[1]);
+    loopIter = atoi(individualCommands[1]);
+    free(individualCommands);
     return 0;
 }
 
@@ -222,6 +246,17 @@ int main(int argc, char *argv[]){
             char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
             char * ifRedirect = strchr(multipleCommands[i],'>');
             char * ifPipe = strchr(multipleCommands[i],'|');
+            int ifLoop = 0;
+
+            //could have used char * ifLoop = strstr(multipleCommands[i], "loop");
+            //but if file name or other executables named loops exists, then there will be a wrong detection
+            if( multipleCommands[i][0] == 'l' &&
+                multipleCommands[i][1] == 'o' &&
+                multipleCommands[i][2] == 'o' &&
+                multipleCommands[i][3] == 'p' &&
+                whiteSpaceCommand(multipleCommands[i][4]) &&
+                isdigit(multipleCommands[i][5])
+            )
             char * dummy = strdup(multipleCommands[i]);
             if(ifRedirect)
                 if(redirectHandler(ifRedirect, dummy))
@@ -229,7 +264,17 @@ int main(int argc, char *argv[]){
             if(ifPipe)
                 if(pipeHandler(ifPipe, dummy))
                     continue;
+            if(ifLoop){
+                char loopIterStr[11]; //since int max is 10 digits
+                if(loopHandler(multipleCommands[i], dummy, loopIterStr))
+                    continue;
+                multipleCommands[i]+=(6 + strlen(loopIterStr));
+            }
             free(dummy);
+            
+            for(int looping =0;looping<loopIter;looping++){
+                char * loopCommand = strdup(multipleCommands[i]);
+
             if(whiteSpaceCommand(multipleCommands[i]))
                 continue;
             if(!ifRedirect){
@@ -252,12 +297,15 @@ int main(int argc, char *argv[]){
                 close(errFileHandler);
                 dup2(stdOutBackup, fileno(stdout));
                 dup2(stdErrBackup, fileno(stderr));
-                close(stdOutBackup);
-                close(stdErrBackup);
+            }
+            strcpy(multipleCommands[i],loopCommand);
+            free(loopCommand);
             }
             free(individualCommands);
         }
         
+        close(stdOutBackup);
+        close(stdErrBackup);
         free(multipleCommands);
     }
     return 0;
