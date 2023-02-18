@@ -145,11 +145,13 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                         printf("Exec failed.\n");
                     #endif
 
-                    if(errno == EACCES){
+                    if(ifRedirect){
                         //executable not found. Do not redirect to file
+			dup2(stdErrBackup, STDERR_FILENO);
                     }
                     write(STDERR_FILENO, error_message, strlen(error_message));
-                    free(args);
+fflush(stderr);
+free(args);
                     exit(0);
                 }
             }
@@ -240,14 +242,23 @@ int loopHandler(char *loopPointer, char * prompt, char * loopIterStr){
     char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
     int x=0;
+if(numOfCommands<3){
+        #if debug
+            printf("Loop iterations not specified\n");
+        #endif
+        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        free(individualCommands);
+        return 1;
+    }
     for(int i=0; i<strlen(individualCommands[1]);i++){
         if(!isdigit((individualCommands[1][i]))){
             x=1;
             break;
         }
     }
-    if(numOfCommands < 3) //should fail for loop & loop <num> cases
-        x = 1;
+
+//    if(numOfCommands < 3) //should fail for loop & loop <num> cases
+//        x = 1;
     if(x){
         #if debug
             printf("Loop iterations not specified\n");
@@ -340,6 +351,8 @@ int main(int argc, char *argv[]){
                 multipleCommands[i][3] == 'p'
             )
                 ifLoop = 1;
+if(!ifLoop)
+loopIter = 1;
             char * dummy = strdup(multipleCommands[i]);
             if(ifRedirect)
                 if(redirectHandler(ifRedirect, dummy))
