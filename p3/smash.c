@@ -193,7 +193,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     return 0;
 }
 
-int redirectHandler(/* char * redirectPointer, */ char * prompt){
+int redirectHandler(char * prompt){
     char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
