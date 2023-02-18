@@ -353,7 +353,6 @@ int main(int argc, char *argv[]){
                     continue;
                 multipleCommands[i]+=(6 + strlen(loopIterStr));
             }
-            free(dummy);
             
             for(int looping =0;looping<loopIter;looping++){
                 char * loopCommand = strdup(multipleCommands[i]);
@@ -406,6 +405,7 @@ int main(int argc, char *argv[]){
         /* 
         close(stdOutBackup);
         close(stdErrBackup); */
+        free(dummy);
         free(multipleCommands);
     }
     return 0;
