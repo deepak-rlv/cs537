@@ -88,7 +88,14 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     }
 
     if(!strcmp(args[0],"exit")){
-        exit(0);
+        if(numOfArgs != 1){
+            #if debug
+                printf("Exit does not accept arguments\n");
+            #endif
+            write(STDERR_FILENO, error_message, strlen(error_message)); 
+        } else{
+            exit(0);
+        }
     } else if(!strcmp(args[0], "cd")){
         if(numOfArgs > 2 || numOfArgs == 1){
             #if debug
@@ -259,9 +266,9 @@ int loopHandler(char * prompt, char * loopIterStr){
     char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
     int flag = 0;
-    if(numOfCommands < 3){
+    if(numOfCommands < 2){
         #if debug
-            printf("Loop iterations not specified\n");
+            printf("Only loop command found\n");
         #endif
         write(STDERR_FILENO, error_message, strlen(error_message)); 
         free(individualCommands);
@@ -329,6 +336,18 @@ int main(int argc, char *argv[]){
         char * promptBackup = strdup(prompt);
         char * ifRedirect = strchr(prompt,'>');
         char * ifPipe = strchr(prompt,'|');
+
+        if(ifRedirect && ifPipe){
+            if(strlen(ifRedirect) > strlen(ifPipe)){
+                #if debug
+                    printf("Cannot redirect twice\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message));
+                free(promptBackup);
+                continue;
+            }
+        }
+        
         if(ifRedirect)
             if(redirectHandler(promptBackup))
                 continue;
