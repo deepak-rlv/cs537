@@ -77,6 +77,16 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     else
         numOfArgs = stringSplitter(args, redirectionCommands[0], " \n\t\r");
 
+    if(!strcmp(args[0],"loop")){
+        #if debug
+            printf("Nested loops detected\n");
+        #endif
+        write(STDERR_FILENO, error_message, strlen(error_message));
+        free(redirectionCommands);
+        free(args);
+        return -1;
+    }
+
     if(!strcmp(args[0],"exit")){
         exit(0);
     } else if(!strcmp(args[0], "cd")){
@@ -198,19 +208,22 @@ int redirectHandler(char * prompt){
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
-        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
+        char * ifRedirect = strchr(multipleCommands[i],'>');
 
-        if(numOfCommands == 1){
-            #if debug
-                printf("No command to redirect\n");
-            #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-            free(multipleCommands);
+        if(ifRedirect){
+            char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "> \n\r\t");
+            if(numOfCommands == 1){
+                #if debug
+                    printf("No command to redirect\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message)); 
+                free(multipleCommands);
+                free(individualCommands);
+                return 1;
+            }
             free(individualCommands);
-            return 1;
         }
-        free(individualCommands);
     }
     free(multipleCommands);
     return 0;
@@ -221,25 +234,28 @@ int pipeHandler(char * prompt){
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
-        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "|");
+        char * ifPipe = strchr(multipleCommands[i],'|');
 
-        if(numOfCommands == 1){
-            #if debug
-                printf("No command to pipe\n");
-            #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-            free(multipleCommands);
+        if(ifPipe){
+            char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "| \n\r\t");
+            if(numOfCommands == 1){
+                #if debug
+                    printf("No command to pipe\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message)); 
+                free(multipleCommands);
+                free(individualCommands);
+                return 1;
+            }
             free(individualCommands);
-            return 1;
         }
-        free(individualCommands);
     }
     free(multipleCommands);
     return 0;
 }
 
-int loopHandler(char *loopPointer, char * prompt, char * loopIterStr){
+int loopHandler(char * prompt, char * loopIterStr){
     char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
     int flag = 0;
@@ -342,8 +358,12 @@ int main(int argc, char *argv[]){
                 loopIter = 1;
             if(ifLoop){
                 char loopIterStr[11] = "\0"; //since int max is 10 digits
-                if(loopHandler(multipleCommands[i], promptBackup, loopIterStr))
+                char * loopCommand = strdup(multipleCommands[i]);
+                if(loopHandler(loopCommand, loopIterStr)){
+                    free(loopCommand);
                     continue;
+                }
+                free(loopCommand);
                 multipleCommands[i]+=(6 + strlen(loopIterStr));
             }
             
@@ -352,7 +372,12 @@ int main(int argc, char *argv[]){
 
                 if(whiteSpaceCommand(multipleCommands[i]))
                     continue;
-                actionHandler(multipleCommands[i], ifPipe, ifRedirect);
+
+                if(actionHandler(multipleCommands[i], ifPipe, ifRedirect) < 0){
+                    free(loopCommand);
+                    break;
+                }
+                
                 strcpy(multipleCommands[i], loopCommand);
                 free(loopCommand);
             }
