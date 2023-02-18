@@ -198,14 +198,15 @@ int redirectHandler(/* char * redirectPointer, */ char * prompt){
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
-        int numOfCommands = stringSplitter(individualCommands, prompt, ">");
+        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
 
         if(numOfCommands == 1){
             #if debug
                 printf("No command to redirect\n");
             #endif
             write(STDERR_FILENO, error_message, strlen(error_message)); 
+            free(multipleCommands);
             free(individualCommands);
             return 1;
         }
@@ -220,14 +221,15 @@ int pipeHandler(char * prompt){
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
-        char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
-        int numOfCommands = stringSplitter(individualCommands, prompt, "|");
+        char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+        int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "|");
 
         if(numOfCommands == 1){
             #if debug
                 printf("No command to pipe\n");
             #endif
             write(STDERR_FILENO, error_message, strlen(error_message)); 
+            free(multipleCommands);
             free(individualCommands);
             return 1;
         }
