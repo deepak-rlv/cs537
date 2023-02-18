@@ -24,9 +24,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-const char error_message[30] = "An error has occurred\n";
 int loopIter = 1;
 int pipesFD[2][2];
+const char error_message[30] = "An error has occurred\n";
 
 int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     char * command = strtok(prompt, delim);
@@ -41,12 +41,30 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     return i;
 }
 
-int actionHandler(char * singleCommand, char * ifPipe){
-    char **args = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
+int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
+    int stdOutBackup = dup(STDOUT_FILENO);
+    int stdErrBackup = dup(STDERR_FILENO);
+    int numOfCommandsInRedirection, outFileHandler, errFileHandler;
+    char **redirectionCommands = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
+    numOfCommandsInRedirection = stringSplitter(redirectionCommands, singleCommand, ">");
+    if(ifRedirect){
+        while(isspace(*redirectionCommands[numOfCommandsInRedirection - 1])){
+            redirectionCommands[numOfCommandsInRedirection - 1] ++;
+        }
+        redirectionCommands[numOfCommandsInRedirection - 1][strcspn(redirectionCommands[numOfCommandsInRedirection - 1], " \r\n\t")]='\0';
+        outFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+        errFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+        if(!ifPipe){
+            dup2(outFileHandler, STDOUT_FILENO);
+            dup2(errFileHandler, STDERR_FILENO);
+        }
+    }
+
+    char **args = malloc(sizeof(char*) * (strlen(redirectionCommands[0]) + 1));
 
     int numOfArgs;
     if(ifPipe){
-        numOfArgs = stringSplitter(args, singleCommand, "|");
+        numOfArgs = stringSplitter(args, redirectionCommands[0], "|");
         if((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)){
             #if debug
                 printf("Pipe creation failed\n");
@@ -57,7 +75,7 @@ int actionHandler(char * singleCommand, char * ifPipe){
         }
     }
     else
-        numOfArgs = stringSplitter(args, singleCommand, " \n\t\r");
+        numOfArgs = stringSplitter(args, redirectionCommands[0], " \n\t\r");
 
     if(!strcmp(args[0],"exit")){
         exit(0);
@@ -96,8 +114,10 @@ int actionHandler(char * singleCommand, char * ifPipe){
                 if(ifPipe){
                     if(pipeIter == 0)
                         dup2(pipesFD[0][1], STDOUT_FILENO);
-                    else if(pipeIter == numOfArgs - 1 && numOfArgs != 2)
+                    else if(pipeIter == numOfArgs - 1 && numOfArgs != 2){
                         dup2(pipesFD[1][0], STDIN_FILENO);
+                        dup2(pipesFD[1][0], STDOUT_FILENO);
+                    }
                     else if (numOfArgs == 2){
                         dup2(pipesFD[0][0], STDIN_FILENO);
                     } else{
@@ -157,7 +177,14 @@ int actionHandler(char * singleCommand, char * ifPipe){
         }
         free(forkReturnPid);
     }
+    fflush(stdout); 
+    fflush(stderr); 
+    close(outFileHandler);
+    close(errFileHandler);
+    dup2(stdOutBackup, STDOUT_FILENO);
+    dup2(stdErrBackup, STDERR_FILENO);
     free(args);
+    free(redirectionCommands);
     return 0;
 }
 
@@ -289,9 +316,9 @@ int main(int argc, char *argv[]){
             if(pipeHandler(ifPipe, dummy))
                 continue;
         free(dummy); */
-
+/* 
         int stdOutBackup = dup(fileno(stdout));
-        int stdErrBackup = dup(fileno(stderr));
+        int stdErrBackup = dup(fileno(stderr)); */
 
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
         
@@ -329,9 +356,10 @@ int main(int argc, char *argv[]){
 
             if(whiteSpaceCommand(multipleCommands[i]))
                 continue;
-            if(!ifRedirect /* && !ifPipe */){
-                actionHandler(multipleCommands[i], ifPipe);
-            } /* else if(ifPipe){
+            // if(ifRedirect && ifPipe){
+                actionHandler(multipleCommands[i], ifPipe, ifRedirect);
+            // } 
+            /* else if(ifPipe){
                 if((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)){
                     #if debug
                         printf("Pipe creation failed\n");
@@ -347,33 +375,33 @@ int main(int argc, char *argv[]){
             
             
             
-            else {
-                int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
-                while(isspace(*individualCommands[numOfCommands-1])){
-                    individualCommands[numOfCommands-1] ++;
-                }
-                // individualCommands[numOfCommands - 1][strlen(individualCommands[numOfCommands - 1])-1]='\0';
-                individualCommands[numOfCommands - 1][strcspn(individualCommands[numOfCommands - 1], " \r\n\t")]='\0';
-                int outFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
-                int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
-                dup2(outFileHandler, fileno(stdout));
-                dup2(errFileHandler, fileno(stderr));
-                actionHandler(multipleCommands[i], NULL);
-                fflush(stdout); 
-                fflush(stderr); 
-                close(outFileHandler);
-                close(errFileHandler);
-                dup2(stdOutBackup, fileno(stdout));
-                dup2(stdErrBackup, fileno(stderr));
-            }
+            //  {
+            //     int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
+            //     while(isspace(*individualCommands[numOfCommands-1])){
+            //         individualCommands[numOfCommands-1] ++;
+            //     }
+            //     // individualCommands[numOfCommands - 1][strlen(individualCommands[numOfCommands - 1])-1]='\0';
+            //     individualCommands[numOfCommands - 1][strcspn(individualCommands[numOfCommands - 1], " \r\n\t")]='\0';
+            //     int outFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+            //     int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
+            //     dup2(outFileHandler, fileno(stdout));
+            //     dup2(errFileHandler, fileno(stderr));
+            //     actionHandler(multipleCommands[i], NULL);
+            //     fflush(stdout); 
+            //     fflush(stderr); 
+            //     close(outFileHandler);
+            //     close(errFileHandler);
+            //     dup2(stdOutBackup, fileno(stdout));
+            //     dup2(stdErrBackup, fileno(stderr));
+            // }
             strcpy(multipleCommands[i],loopCommand);
             free(loopCommand);
             }
             free(individualCommands);
         }
-        
+        /* 
         close(stdOutBackup);
-        close(stdErrBackup);
+        close(stdErrBackup); */
         free(multipleCommands);
     }
     return 0;
