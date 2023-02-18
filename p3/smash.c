@@ -117,12 +117,12 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                     else if(pipeIter == numOfArgs - 1 && numOfArgs != 2){
                         dup2(pipesFD[1][0], STDIN_FILENO);
                         if(ifRedirect)
-			dup2(outFileHandler, STDOUT_FILENO);
+			                dup2(outFileHandler, STDOUT_FILENO);
                     }
                     else if (numOfArgs == 2){
                         dup2(pipesFD[0][0], STDIN_FILENO);
-			if(ifRedirect)
-			dup2(outFileHandler, STDOUT_FILENO);
+                        if(ifRedirect)
+                            dup2(outFileHandler, STDOUT_FILENO);
                     } else{
                         dup2(pipesFD[0][0], STDIN_FILENO);
                         dup2(pipesFD[1][1], STDOUT_FILENO);
@@ -147,16 +147,14 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
 
                     if(ifRedirect){
                         //executable not found. Do not redirect to file
-			dup2(stdErrBackup, STDERR_FILENO);
+                        dup2(stdErrBackup, STDERR_FILENO);
                     }
                     write(STDERR_FILENO, error_message, strlen(error_message));
-fflush(stderr);
-free(args);
+                    fflush(stderr);
+                    free(args);
                     exit(0);
                 }
             }
-            
-            
             if(!ifPipe)
                 break;
         }
@@ -183,22 +181,23 @@ free(args);
         free(forkReturnPid);
     }
 	if(ifRedirect){
-    fflush(stdout);
-    fflush(stderr);
-    close(outFileHandler);
-    close(errFileHandler);
-    dup2(stdOutBackup, STDOUT_FILENO);
-    dup2(stdErrBackup, STDERR_FILENO);}
+        fflush(stdout);
+        fflush(stderr);
+        close(outFileHandler);
+        close(errFileHandler);
+        dup2(stdOutBackup, STDOUT_FILENO);
+        dup2(stdErrBackup, STDERR_FILENO);
+    }
     free(args);
     free(redirectionCommands);
     return 0;
 }
 
-int redirectHandler(char * redirectPointer, char * prompt){
-    /* char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+int redirectHandler(/* char * redirectPointer, */ char * prompt){
+    char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-    for(int i = 0; i < numberOfCommands; i++){ */
+    for(int i = 0; i < numberOfCommands; i++){
         char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
         int numOfCommands = stringSplitter(individualCommands, prompt, ">");
 
@@ -211,8 +210,8 @@ int redirectHandler(char * redirectPointer, char * prompt){
             return 1;
         }
         free(individualCommands);
-    /* }
-    free(multipleCommands); */
+    }
+    free(multipleCommands);
     return 0;
 }
 
@@ -256,9 +255,6 @@ if(numOfCommands<3){
             break;
         }
     }
-
-//    if(numOfCommands < 3) //should fail for loop & loop <num> cases
-//        x = 1;
     if(x){
         #if debug
             printf("Loop iterations not specified\n");
@@ -281,8 +277,6 @@ int whiteSpaceCommand(char * prompt){
         return 1;
     return 0;
 }
-
-//ToDo check if number of iterations is provided with loops
 
 int main(int argc, char *argv[]){
     if(argc > 1){
@@ -311,36 +305,28 @@ int main(int argc, char *argv[]){
                 return 0;
             }
         }while(whiteSpaceCommand(prompt));
-        
-
-        // prompt[charactersRead - 1] = '\0';   // Replacing the \n at the end of the prompt with \0
 
         #if debug
             printf("Input Command: %s\n",prompt);
         #endif
 
-        char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
-
-        /* char * ifRedirect = strchr(prompt,'>');
-        char * ifPipe = strchr(prompt,'|');
         char * dummy = strdup(prompt);
-        if(ifRedirect)
-            if(redirectHandler(ifRedirect, dummy))
-                continue;
-        if(ifPipe)
-            if(pipeHandler(ifPipe, dummy))
-                continue;
-        free(dummy); */
-/* 
-        int stdOutBackup = dup(fileno(stdout));
-        int stdErrBackup = dup(fileno(stderr)); */
+        char * ifRedirect = strchr(prompt,'>');
+        char * ifPipe = strchr(prompt,'|');
+            if(ifRedirect)
+                if(redirectHandler(dummy))
+                    continue;
+            if(ifPipe)
+                if(pipeHandler(ifPipe, dummy))
+                    continue;
 
+        char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
         
         for(int i = 0; i < numberOfCommands; i++){
             char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
-            char * ifRedirect = strchr(multipleCommands[i],'>');
-            char * ifPipe = strchr(multipleCommands[i],'|');
+            ifRedirect = strchr(multipleCommands[i],'>');
+            ifPipe = strchr(multipleCommands[i],'|');
             int ifLoop = 0;
 
             //could have used char * ifLoop = strstr(multipleCommands[i], "loop");
@@ -351,15 +337,16 @@ int main(int argc, char *argv[]){
                 multipleCommands[i][3] == 'p'
             )
                 ifLoop = 1;
-if(!ifLoop)
-loopIter = 1;
-            char * dummy = strdup(multipleCommands[i]);
+
+            if(!ifLoop)
+                loopIter = 1;
+            /* char * dummy = strdup(multipleCommands[i]);
             if(ifRedirect)
                 if(redirectHandler(ifRedirect, dummy))
                     continue;
             if(ifPipe)
                 if(pipeHandler(ifPipe, dummy))
-                    continue;
+                    continue; */
             if(ifLoop){
                 char loopIterStr[11] = "\0"; //since int max is 10 digits
                 if(loopHandler(multipleCommands[i], dummy, loopIterStr))
