@@ -116,10 +116,13 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                         dup2(pipesFD[0][1], STDOUT_FILENO);
                     else if(pipeIter == numOfArgs - 1 && numOfArgs != 2){
                         dup2(pipesFD[1][0], STDIN_FILENO);
-                        dup2(pipesFD[1][0], STDOUT_FILENO);
+                        if(ifRedirect)
+			dup2(outFileHandler, STDOUT_FILENO);
                     }
                     else if (numOfArgs == 2){
                         dup2(pipesFD[0][0], STDIN_FILENO);
+			if(ifRedirect)
+			dup2(outFileHandler, STDOUT_FILENO);
                     } else{
                         dup2(pipesFD[0][0], STDIN_FILENO);
                         dup2(pipesFD[1][1], STDOUT_FILENO);
@@ -177,12 +180,13 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         }
         free(forkReturnPid);
     }
-    fflush(stdout); 
-    fflush(stderr); 
+	if(ifRedirect){
+    fflush(stdout);
+    fflush(stderr);
     close(outFileHandler);
     close(errFileHandler);
     dup2(stdOutBackup, STDOUT_FILENO);
-    dup2(stdErrBackup, STDERR_FILENO);
+    dup2(stdErrBackup, STDERR_FILENO);}
     free(args);
     free(redirectionCommands);
     return 0;
