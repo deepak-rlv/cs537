@@ -20,7 +20,7 @@ Test badcd
 cd to a bad directory
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test badcd PASSED (5 of 5)
@@ -34,7 +34,7 @@ Test exec
 path should be /bin
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test exec PASSED (5 of 5)
@@ -48,21 +48,11 @@ Test badexec
 run programs that do not exist in /bin
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-testing.test.Failure: ./smash gave incorrect standard output.
-Expected: "smash> smash> smash> smash> smash>"
-Got:      "smash> smash> logavaseekaran\nsmash> smash> smash>"
+/tmp/tmpq0koze65/p/./smash
 
 
-test badexec FAILED (0 of 5)
+test badexec PASSED (5 of 5)
  (run programs that do not exist in /bin)
- ./smash gave incorrect standard output.
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/badexec/in
- and check out the test folder
- /home/cs537-1/tests/P3/badexec
- to compare your output with reference outputs. 
 
 starting pwd
 
@@ -72,7 +62,7 @@ Test pwd
 pwd test
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test pwd PASSED (5 of 5)
@@ -86,7 +76,7 @@ Test whitespace
 leading and trailing whitespace, full whitespaces or empty string
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test whitespace PASSED (5 of 5)
@@ -100,20 +90,11 @@ Test rdr
 simple redirection with no standard error
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+/tmp/tmpq0koze65/p/./smash
 
 
-test rdr FAILED (0 of 10)
+test rdr PASSED (10 of 10)
  (simple redirection with no standard error)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/rdr/in
- and check out the test folder
- /home/cs537-1/tests/P3/rdr
- to compare your output with reference outputs. 
 
 starting pipe
 
@@ -123,19 +104,11 @@ Test pipe
 simple pipe
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
+/tmp/tmpq0koze65/p/./smash
 
 
-test pipe FAILED (0 of 15)
+test pipe PASSED (15 of 15)
  (simple pipe)
- Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/pipe/in
- and check out the test folder
- /home/cs537-1/tests/P3/pipe
- to compare your output with reference outputs. 
 
 starting mul
 
@@ -145,7 +118,7 @@ Test mul
 running multiple commands at once
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test mul PASSED (5 of 5)
@@ -159,7 +132,7 @@ Test loop
 simple loop
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
+/tmp/tmpq0koze65/p/./smash
 
 
 test loop PASSED (15 of 15)
@@ -173,20 +146,11 @@ Test looprd
 simple redirection with loop
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+/tmp/tmpq0koze65/p/./smash
 
 
-test looprd FAILED (0 of 15)
+test looprd PASSED (15 of 15)
  (simple redirection with loop)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/looprd/in
- and check out the test folder
- /home/cs537-1/tests/P3/looprd
- to compare your output with reference outputs. 
 
 starting piperd
 
@@ -196,14 +160,12 @@ Test piperd
 redirection with pipe
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-FileNotFoundError: [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+/tmp/tmpq0koze65/p/./smash
 
 
 test piperd FAILED (0 of 15)
  (redirection with pipe)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+ standard output does not match redirected output
 
  Test it yourself by running
  smash </home/cs537-1/tests/P3/piperd/in
@@ -219,19 +181,11 @@ Test pipechain
 chain pipe
 
 **********************************************************************
-/tmp/tmppyjikh0q/p/./smash
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
+/tmp/tmpq0koze65/p/./smash
 
 
-test pipechain FAILED (0 of 15)
+test pipechain PASSED (15 of 15)
  (chain pipe)
- Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/pipechain/in
- and check out the test folder
- /home/cs537-1/tests/P3/pipechain
- to compare your output with reference outputs. 
 
 **********************************************************************
 Summary:
@@ -244,15 +198,8 @@ test badcd PASSED (5 of 5)
 test exec PASSED (5 of 5)
  (path should be /bin)
 
-test badexec FAILED (0 of 5)
+test badexec PASSED (5 of 5)
  (run programs that do not exist in /bin)
- ./smash gave incorrect standard output.
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/badexec/in
- and check out the test folder
- /home/cs537-1/tests/P3/badexec
- to compare your output with reference outputs. 
 
 test pwd PASSED (5 of 5)
  (pwd test)
@@ -260,26 +207,11 @@ test pwd PASSED (5 of 5)
 test whitespace PASSED (5 of 5)
  (leading and trailing whitespace, full whitespaces or empty string)
 
-test rdr FAILED (0 of 10)
+test rdr PASSED (10 of 10)
  (simple redirection with no standard error)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
 
- Test it yourself by running
- smash </home/cs537-1/tests/P3/rdr/in
- and check out the test folder
- /home/cs537-1/tests/P3/rdr
- to compare your output with reference outputs. 
-
-test pipe FAILED (0 of 15)
+test pipe PASSED (15 of 15)
  (simple pipe)
- Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 55: invalid continuation byte
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/pipe/in
- and check out the test folder
- /home/cs537-1/tests/P3/pipe
- to compare your output with reference outputs. 
 
 test mul PASSED (5 of 5)
  (running multiple commands at once)
@@ -287,21 +219,12 @@ test mul PASSED (5 of 5)
 test loop PASSED (15 of 15)
  (simple loop)
 
-test looprd FAILED (0 of 15)
+test looprd PASSED (15 of 15)
  (simple redirection with loop)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
-
- Test it yourself by running
- smash </home/cs537-1/tests/P3/looprd/in
- and check out the test folder
- /home/cs537-1/tests/P3/looprd
- to compare your output with reference outputs. 
 
 test piperd FAILED (0 of 15)
  (redirection with pipe)
- missing redirected standard output outputfile
- Unexpected exception [Errno 2] No such file or directory: '/tmp/tmppyjikh0q/p/outputfile'
+ standard output does not match redirected output
 
  Test it yourself by running
  smash </home/cs537-1/tests/P3/piperd/in
@@ -309,16 +232,9 @@ test piperd FAILED (0 of 15)
  /home/cs537-1/tests/P3/piperd
  to compare your output with reference outputs. 
 
-test pipechain FAILED (0 of 15)
+test pipechain PASSED (15 of 15)
  (chain pipe)
- Unexpected exception 'utf-8' codec can't decode byte 0xc2 in position 62: invalid continuation byte
 
- Test it yourself by running
- smash </home/cs537-1/tests/P3/pipechain/in
- and check out the test folder
- /home/cs537-1/tests/P3/pipechain
- to compare your output with reference outputs. 
-
-Passed 7 of 13 tests.
-Overall 7 of 13
-Points 45 of 120
+Passed 12 of 13 tests.
+Overall 12 of 13
+Points 105 of 120

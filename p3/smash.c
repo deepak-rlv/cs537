@@ -25,7 +25,8 @@
 #include <unistd.h>
 
 const char error_message[30] = "An error has occurred\n";
-int loopIter=1;
+int loopIter = 1;
+int pipesFD[2][2];
 
 int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     char * command = strtok(prompt, delim);
@@ -40,42 +41,82 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
     return i;
 }
 
-int actionHandler(char * singleCommand){
+int actionHandler(char * singleCommand, char * ifPipe){
     char **args = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
 
+    int numOfArgs;
+    if(ifPipe){
+        numOfArgs = stringSplitter(args, singleCommand, "|");
+        if((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)){
+            #if debug
+                printf("Pipe creation failed\n");
+            #endif
+            write(STDERR_FILENO, error_message, strlen(error_message));
+            free(args);
+            return 0;
+        }
+    }
+    else
+        numOfArgs = stringSplitter(args, singleCommand, " \n\t\r");
 
-    int numOfArgs = stringSplitter(args, singleCommand, " \n\t\r") - 1;
-
-        if(!strcmp(args[0],"exit")){
-            exit(0);
-        } else if(!strcmp(args[0], "cd")){
-            if(numOfArgs > 1 || numOfArgs == 0){
-                #if debug
-                    printf("cd arguments error\n");
-                #endif
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
-            } else {
-                int chdirReturn = chdir(args[1]);
-                if(chdirReturn < 0){
-                    #if debug
-                        printf("chdir error\n");
-                    #endif
-                    write(STDERR_FILENO, error_message, strlen(error_message));
-                }
-            }
-        } else if(!strcmp(args[0], "pwd")){
-            char currentDir[PWD_SIZE];
-            if(!getcwd(currentDir, PWD_SIZE));
-            printf("%s\n", currentDir);
+    if(!strcmp(args[0],"exit")){
+        exit(0);
+    } else if(!strcmp(args[0], "cd")){
+        if(numOfArgs > 2 || numOfArgs == 1){
+            #if debug
+                printf("cd arguments error\n");
+            #endif
+            write(STDERR_FILENO, error_message, strlen(error_message)); 
         } else {
-            int forkReturn = fork();
-            if(forkReturn < 0){
+            int chdirReturn = chdir(args[1]);
+            if(chdirReturn < 0){
+                #if debug
+                    printf("chdir error\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message));
+            }
+        }
+    } else if(!strcmp(args[0], "pwd")){
+        char currentDir[PWD_SIZE];
+        if(!getcwd(currentDir, PWD_SIZE));
+        printf("%s\n", currentDir);
+    } else {
+        int * forkReturnPid = malloc(sizeof(int) * numOfArgs);
+        for(int pipeIter = 0; pipeIter < numOfArgs; pipeIter++){
+            forkReturnPid[pipeIter] = fork();
+            if(forkReturnPid[pipeIter] < 0){
                 #if debug
                     printf("Fork failed\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
-            } else if(forkReturn == 0){
-                int execReturn = execv(args[0], args);
+                free(args);
+                return 0;
+            } else if(forkReturnPid[pipeIter] == 0){
+                char **pipeArgs = malloc(sizeof(char*) * (strlen(args[pipeIter]) + 1));
+                if(ifPipe){
+                    if(pipeIter == 0)
+                        dup2(pipesFD[0][1], STDOUT_FILENO);
+                    else if(pipeIter == numOfArgs - 1 && numOfArgs != 2)
+                        dup2(pipesFD[1][0], STDIN_FILENO);
+                    else if (numOfArgs == 2){
+                        dup2(pipesFD[0][0], STDIN_FILENO);
+                    } else{
+                        dup2(pipesFD[0][0], STDIN_FILENO);
+                        dup2(pipesFD[1][1], STDOUT_FILENO);
+                    }
+                    close(pipesFD[0][0]);
+                    close(pipesFD[0][1]);
+                    close(pipesFD[1][0]);
+                    close(pipesFD[1][1]);
+
+                    stringSplitter(pipeArgs, args[pipeIter], " \n\t\r") ;
+
+                }
+                int execReturn = 0;
+                if(!ifPipe)
+                    execReturn = execv(args[0], args);
+                else
+                    execReturn = execv(pipeArgs[0], pipeArgs);
                 if (execReturn < 0){
                     #if debug
                         printf("Exec failed.\n");
@@ -85,20 +126,37 @@ int actionHandler(char * singleCommand){
                         //executable not found. Do not redirect to file
                     }
                     write(STDERR_FILENO, error_message, strlen(error_message));
+                    free(args);
                     exit(0);
                 }
-                exit(0);
-            } else {
-                int waitReturn = wait(NULL);
-                if(waitReturn < 0){
-                    #if debug
-                        printf("Wait failed\n");
-                    #endif
-                    write(STDERR_FILENO, error_message, strlen(error_message));
-                }
+            }
+            
+            
+            if(!ifPipe)
+                break;
+        }
+        if(ifPipe){
+            close(pipesFD[0][1]);
+            close(pipesFD[0][0]);
+            close(pipesFD[1][1]);
+            close(pipesFD[1][0]);
+        }
+
+        int waitReturn = 0;
+        for(int i = 0; i < numOfArgs; i++){
+            waitpid(forkReturnPid[i], NULL, 0);
+            if(waitReturn < 0){
+                #if debug
+                    printf("Wait failed\n");
+                #endif
+                write(STDERR_FILENO, error_message, strlen(error_message));
+                free(forkReturnPid);
+                free(args);
+                return 0;
             }
         }
-    
+        free(forkReturnPid);
+    }
     free(args);
     return 0;
 }
@@ -271,9 +329,25 @@ int main(int argc, char *argv[]){
 
             if(whiteSpaceCommand(multipleCommands[i]))
                 continue;
-            if(!ifRedirect && !ifPipe){
-                actionHandler(multipleCommands[i]);
-            } else {
+            if(!ifRedirect /* && !ifPipe */){
+                actionHandler(multipleCommands[i], ifPipe);
+            } /* else if(ifPipe){
+                if((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)){
+                    #if debug
+                        printf("Pipe creation failed\n");
+                    #endif
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                    break;
+                }
+                int numOfArgs = stringSplitter(individualCommands, multipleCommands[i], "|");
+                for(pipeIter = 0; pipeIter < numOfArgs; pipeIter++){
+                    actionHandler(multipleCommands[i], ifPipe);
+                }
+            } */
+            
+            
+            
+            else {
                 int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], ">");
                 while(isspace(*individualCommands[numOfCommands-1])){
                     individualCommands[numOfCommands-1] ++;
@@ -284,7 +358,7 @@ int main(int argc, char *argv[]){
                 int errFileHandler = open(individualCommands[numOfCommands - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
                 dup2(outFileHandler, fileno(stdout));
                 dup2(errFileHandler, fileno(stderr));
-                actionHandler(multipleCommands[i]);
+                actionHandler(multipleCommands[i], NULL);
                 fflush(stdout); 
                 fflush(stderr); 
                 close(outFileHandler);
