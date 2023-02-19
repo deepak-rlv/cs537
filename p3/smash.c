@@ -45,7 +45,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     int stdOutBackup = dup(STDOUT_FILENO);
     int stdErrBackup = dup(STDERR_FILENO);
     int numOfCommandsInRedirection, outFileHandler, errFileHandler;
-    char **redirectionCommands = malloc(sizeof(char*) * (strlen(singleCommand) + 1));
+    char **redirectionCommands = (char **)malloc(sizeof(char *) * (strlen(singleCommand) + 1));
     numOfCommandsInRedirection = stringSplitter(redirectionCommands, singleCommand, ">");
     if(ifRedirect){
         while(isspace(*redirectionCommands[numOfCommandsInRedirection - 1])){
@@ -60,7 +60,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         }
     }
 
-    char **args = malloc(sizeof(char*) * (strlen(redirectionCommands[0]) + 1));
+    char **args = (char **)malloc(sizeof(char *) * (strlen(redirectionCommands[0]) + 1));
 
     int numOfArgs;
     if(ifPipe){
@@ -116,7 +116,8 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         if(!getcwd(currentDir, PWD_SIZE));
         printf("%s\n", currentDir);
     } else {
-        int * forkReturnPid = malloc(sizeof(int) * numOfArgs);
+        int * forkReturnPid = (int *)malloc(sizeof(int) * numOfArgs);
+        memset(forkReturnPid, 0, sizeof(int) * numOfArgs);
         for(int pipeIter = 0; pipeIter < numOfArgs; pipeIter++){
             forkReturnPid[pipeIter] = fork();
             if(forkReturnPid[pipeIter] < 0){
@@ -127,7 +128,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                 free(args);
                 return 0;
             } else if(forkReturnPid[pipeIter] == 0){
-                char **pipeArgs = malloc(sizeof(char*) * (strlen(args[pipeIter]) + 1));
+                char **pipeArgs = (char **)malloc(sizeof(char *) * (strlen(args[pipeIter]) + 1));
                 if(ifPipe){
                     if(pipeIter == 0)
                         dup2(pipesFD[0][1], STDOUT_FILENO);
@@ -149,8 +150,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                     close(pipesFD[1][0]);
                     close(pipesFD[1][1]);
 
-                    stringSplitter(pipeArgs, args[pipeIter], " \n\t\r") ;
-
+                    stringSplitter(pipeArgs, args[pipeIter], " \n\t\r");
                 }
                 int execReturn = 0;
                 if(!ifPipe)
@@ -211,14 +211,14 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
 }
 
 int redirectHandler(char * prompt){
-    char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
         char * ifRedirect = strchr(multipleCommands[i],'>');
 
         if(ifRedirect){
-            char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "> \n\r\t");
             if(numOfCommands == 1){
                 #if debug
@@ -237,14 +237,14 @@ int redirectHandler(char * prompt){
 }
 
 int pipeHandler(char * prompt){
-    char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
     for(int i = 0; i < numberOfCommands; i++){
         char * ifPipe = strchr(multipleCommands[i],'|');
 
         if(ifPipe){
-            char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "| \n\r\t");
             if(numOfCommands == 1){
                 #if debug
@@ -263,7 +263,7 @@ int pipeHandler(char * prompt){
 }
 
 int loopHandler(char * prompt, char * loopIterStr){
-    char **individualCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+    char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
     int flag = 0;
     if(numOfCommands < 2){
@@ -289,6 +289,15 @@ int loopHandler(char * prompt, char * loopIterStr){
         return 1;
     }
     loopIter = atoi(individualCommands[1]);
+    if(loopIter <= 0 || loopIter > 0x7FFFFFFF){
+        #if debug
+            printf("Loop iterations either 0 or overflowing int buffer\n");
+        #endif
+        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        free(individualCommands);
+        return 1;
+    }
+    
     strcpy(loopIterStr, individualCommands[1]);
     free(individualCommands);
     return 0;
@@ -303,7 +312,7 @@ int whiteSpaceCommand(char * prompt){
         return 1;
     return 0;
 }
-//ToDo Fix - loop not working with more than single digit loops
+
 int main(int argc, char *argv[]){
     if(argc > 1){
         #if debug
@@ -314,9 +323,9 @@ int main(int argc, char *argv[]){
     }
     
     size_t promptSize = 20;
-    char *prompt = malloc(sizeof(char) * promptSize);
     
     while(1){
+        char * prompt = (char *)malloc(sizeof(char) * promptSize);
         do{
             printf("smash> ");
             fflush(stdout);
@@ -326,6 +335,7 @@ int main(int argc, char *argv[]){
                     printf("Failed to read command.\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
+                free(prompt);
                 continue;
             }
         }while(whiteSpaceCommand(prompt));
@@ -345,6 +355,7 @@ int main(int argc, char *argv[]){
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
                 free(promptBackup);
+                free(prompt);
                 continue;
             }
         }
@@ -352,20 +363,22 @@ int main(int argc, char *argv[]){
         if(ifRedirect)
             if(redirectHandler(promptBackup)){
                 free(promptBackup);
+                free(prompt);
                 continue;
             }
         if(ifPipe)
             if(pipeHandler(promptBackup)){
                 free(promptBackup);
+                free(prompt);
                 continue;
             }
         free(promptBackup);
 
-        char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
+        char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
         
         for(int i = 0; i < numberOfCommands; i++){
-            char **individualCommands = malloc(sizeof(char*) * (strlen(multipleCommands[i]) + 1));
+            char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             ifRedirect = strchr(multipleCommands[i],'>');
             ifPipe = strchr(multipleCommands[i],'|');
             int ifLoop = 0;
@@ -409,7 +422,7 @@ int main(int argc, char *argv[]){
             free(individualCommands);
         }
         free(multipleCommands);
+        free(prompt);
     }
-    free(prompt);
     return 0;
 }
