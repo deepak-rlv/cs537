@@ -289,6 +289,7 @@ int loopHandler(char * prompt, char * loopIterStr){
         return 1;
     }
     loopIter = atoi(individualCommands[1]);
+    strcpy(loopIterStr, individualCommands[1]);
     free(individualCommands);
     return 0;
 }
@@ -302,7 +303,7 @@ int whiteSpaceCommand(char * prompt){
         return 1;
     return 0;
 }
-
+//ToDo Fix - loop not working with more than single digit loops
 int main(int argc, char *argv[]){
     if(argc > 1){
         #if debug
@@ -325,7 +326,7 @@ int main(int argc, char *argv[]){
                     printf("Failed to read command.\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
-                return 0;
+                continue;
             }
         }while(whiteSpaceCommand(prompt));
 
@@ -349,11 +350,16 @@ int main(int argc, char *argv[]){
         }
         
         if(ifRedirect)
-            if(redirectHandler(promptBackup))
+            if(redirectHandler(promptBackup)){
+                free(promptBackup);
                 continue;
+            }
         if(ifPipe)
-            if(pipeHandler(promptBackup))
+            if(pipeHandler(promptBackup)){
+                free(promptBackup);
                 continue;
+            }
+        free(promptBackup);
 
         char **multipleCommands = malloc(sizeof(char*) * (strlen(prompt) + 1));
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
@@ -386,8 +392,8 @@ int main(int argc, char *argv[]){
                 multipleCommands[i]+=(6 + strlen(loopIterStr));
             }
             
+            char * loopCommand = strdup(multipleCommands[i]);
             for(int numOfLoops = 0; numOfLoops < loopIter; numOfLoops++){
-                char * loopCommand = strdup(multipleCommands[i]);
 
                 if(whiteSpaceCommand(multipleCommands[i]))
                     continue;
@@ -398,12 +404,12 @@ int main(int argc, char *argv[]){
                 }
                 
                 strcpy(multipleCommands[i], loopCommand);
-                free(loopCommand);
             }
+            free(loopCommand);
             free(individualCommands);
         }
-        free(promptBackup);
         free(multipleCommands);
     }
+    free(prompt);
     return 0;
 }
