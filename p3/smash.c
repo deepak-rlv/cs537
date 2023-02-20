@@ -94,13 +94,17 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     char **redirectionCommands = (char **)malloc(sizeof(char *) * (strlen(singleCommand) + 1));
     numOfCommandsInRedirection = stringSplitter(redirectionCommands, singleCommand, ">");
     if(ifRedirect){
+        /*
+            Skipping leading white spaces for the filename
+        */
         while(isspace(*redirectionCommands[numOfCommandsInRedirection - 1])){
             redirectionCommands[numOfCommandsInRedirection - 1] ++;
         }
+
         /*
             To avoid trailing whitespace in file names, the last character is forced to \0
         */
-        redirectionCommands[numOfCommandsInRedirection - 1][strcspn(redirectionCommands[numOfCommandsInRedirection - 1], " \r\n\t")]='\0';
+        redirectionCommands[numOfCommandsInRedirection - 1][strcspn(redirectionCommands[numOfCommandsInRedirection - 1], " \r\n\t")] = '\0';
         outFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
         errFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
         if(!ifPipe){
@@ -108,7 +112,6 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
             dup2(errFileHandler, STDERR_FILENO);
         }
     }
-
 
     int numOfArgs;
     char **args = (char **)malloc(sizeof(char *) * (strlen(redirectionCommands[0]) + 1));
@@ -146,8 +149,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     if(!strcmp(args[0],"exit")){
         /*
             EXIT
-        */
-        /*
+
             Generating error if exit is passed with an argument
             Else, exit from shell
         */
@@ -162,8 +164,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     } else if(!strcmp(args[0], "cd")){
         /*
             CD
-        */
-        /*
+
             cd always takes one argument
             generating errors if it does not
         */
@@ -215,7 +216,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                 return 0;
             } else if(forkReturnPid[pipeIter] == 0){
                 /*
-                    CHILD PROCESS
+                    CHILD PROCESS STARTS HERE
                 */
                 char **pipeArgs = (char **)malloc(sizeof(char *) * (strlen(args[pipeIter]) + 1));
                 if(ifPipe){
@@ -285,6 +286,9 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                     free(args);
                     exit(0);
                 }
+                /*
+                    CHILD PROCESS ENDS HERE
+                */
             }
             if(!ifPipe)
                 break;
@@ -345,8 +349,42 @@ int redirectErrorHandler(char * prompt){
         char * ifRedirect = strchr(multipleCommands[i],'>');
 
         if(ifRedirect){
+            /*
+                Error if more than one redirect symbol present, pwd >> out, pwd > out > output
+            */
+            int numOfRedirects = 0;
+            char * dummy = multipleCommands[i];
+            while(* dummy){
+                if(*dummy ++ == '>')
+                    numOfRedirects ++;
+                if(numOfRedirects > 1){
+                    #if debug
+                        printf("More than 1 redirect symbol found\n");
+                    #endif
+                    write(STDERR_FILENO, error_message, strlen(error_message)); 
+                    free(multipleCommands);
+                    return 1;
+                }
+            }
+
+            
             char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "> \n\r\t");
+            /*
+                Error if trying to redirect to output to more than one file, pwd > out output
+            */
+            for(int i = 0; i < strlen(individualCommands[numOfCommands - 1]); i++){
+                if(isblank(individualCommands[numOfCommands - 1][i])){
+                    #if debug
+                        printf("Cannot be redirected to more than one file\n");
+                    #endif
+                    write(STDERR_FILENO, error_message, strlen(error_message));
+                    free(individualCommands);
+                    free(multipleCommands);
+                    return 0;
+                }
+            }
+
             /*
                 Error if no commands are found to redirect, ls > or > output
             */
@@ -647,10 +685,12 @@ int main(int argc, char *argv[]){
 
                 ifRedirect = strchr(multipleCommands[i], '>');
                 ifPipe = strchr(multipleCommands[i], '|');
-                if(actionHandler(multipleCommands[i], ifPipe, ifRedirect) < 0){
-                    free(loopCommand);
+                
+                /*
+                    Break if error detected. Currently, only detecting nested loops
+                */
+                if(actionHandler(multipleCommands[i], ifPipe, ifRedirect) < 0)
                     break;
-                }
                 
                 /*
                     Copying the same command back since we need to run in a loop
