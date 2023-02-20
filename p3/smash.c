@@ -59,10 +59,10 @@ const char error_message[30] = "An error has occurred\n";
  * @param delim String of all delimiting characters
  * @return int The number of resultant strings 
  */
-int stringSplitter(char **multipleCommands, char * prompt, char * delim){
+int stringSplitter(char **multipleCommands, char * prompt, char * delim) {
     char * command = strtok(prompt, delim);
-    int i=0;
-    while (command != NULL){
+    int i = 0;
+    while (command != NULL) {
         multipleCommands[i] = command;
         command = strtok(NULL, delim);
         i++;
@@ -80,7 +80,7 @@ int stringSplitter(char **multipleCommands, char * prompt, char * delim){
  * @param ifRedirect Pointer to indicate if redirection need to be done
  * @return int -1 if nested loops detected, 0 otherwise
  */
-int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
+int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect) {
     /*
         Taking backups of stdout & stderr to recover after redirection
     */
@@ -93,12 +93,12 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     int numOfCommandsInRedirection, outFileHandler, errFileHandler;
     char **redirectionCommands = (char **)malloc(sizeof(char *) * (strlen(singleCommand) + 1));
     numOfCommandsInRedirection = stringSplitter(redirectionCommands, singleCommand, ">");
-    if(ifRedirect){
+    if (ifRedirect) {
         /*
             Skipping leading white spaces for the filename
         */
-        while(isspace(*redirectionCommands[numOfCommandsInRedirection - 1])){
-            redirectionCommands[numOfCommandsInRedirection - 1] ++;
+        while(isspace(*redirectionCommands[numOfCommandsInRedirection - 1])) {
+            redirectionCommands[numOfCommandsInRedirection - 1]++;
         }
 
         /*
@@ -107,7 +107,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         redirectionCommands[numOfCommandsInRedirection - 1][strcspn(redirectionCommands[numOfCommandsInRedirection - 1], " \r\n\t")] = '\0';
         outFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
         errFileHandler = open(redirectionCommands[numOfCommandsInRedirection - 1], O_CREAT|O_TRUNC|O_WRONLY, 0644);
-        if(!ifPipe){
+        if (!ifPipe) {
             dup2(outFileHandler, STDOUT_FILENO);
             dup2(errFileHandler, STDERR_FILENO);
         }
@@ -119,9 +119,9 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         Splitting commands based on | to handle pipes if ifPipe is not NULL
         else split based on white space and continue normal execution
     */
-    if(ifPipe){
+    if (ifPipe) {
         numOfArgs = stringSplitter(args, redirectionCommands[0], "|");
-        if((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)){
+        if ((pipe(pipesFD[0]) < 0) || (pipe(pipesFD[1]) < 0)) {
             #if debug
                 printf("Pipe creation failed\n");
             #endif
@@ -129,14 +129,14 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
             free(args);
             return 0;
         }
-    }
-    else
+    } else {
         numOfArgs = stringSplitter(args, redirectionCommands[0], " \n\t\r");
+    }
 
     /*
         Generating error if nested loops detected
     */
-    if(!strcmp(args[0],"loop")){
+    if (!strcmp(args[0], "loop")) {
         #if debug
             printf("Nested loops detected\n");
         #endif
@@ -146,48 +146,48 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         return -1;
     }
 
-    if(!strcmp(args[0],"exit")){
+    if (!strcmp(args[0], "exit")) {
         /*
             EXIT
 
             Generating error if exit is passed with an argument
             Else, exit from shell
         */
-        if(numOfArgs != 1){
+        if (numOfArgs != 1) {
             #if debug
                 printf("Exit does not accept arguments\n");
             #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
-        } else{
+            write(STDERR_FILENO, error_message, strlen(error_message));
+        } else {
             exit(0);
         }
-    } else if(!strcmp(args[0], "cd")){
+    } else if (!strcmp(args[0], "cd")) {
         /*
             CD
 
             cd always takes one argument
             generating errors if it does not
         */
-        if(numOfArgs > 2 || numOfArgs == 1){
+        if (numOfArgs > 2 || numOfArgs == 1) {
             #if debug
                 printf("cd arguments error\n");
             #endif
-            write(STDERR_FILENO, error_message, strlen(error_message)); 
+            write(STDERR_FILENO, error_message, strlen(error_message));
         } else {
             int chdirReturn = chdir(args[1]);
-            if(chdirReturn < 0){
+            if (chdirReturn < 0) {
                 #if debug
                     printf("chdir error\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
             }
         }
-    } else if(!strcmp(args[0], "pwd")){
+    } else if (!strcmp(args[0], "pwd")) {
         /*
             PWD
         */
         char currentDir[PWD_SIZE];
-        if(!getcwd(currentDir, PWD_SIZE)){
+        if (!getcwd(currentDir, PWD_SIZE)) {
             #if debug
                 printf("Couldn't fetch current working directory\n");
             #endif
@@ -205,27 +205,27 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         int * forkReturnPid = (int *)malloc(sizeof(int) * numOfArgs);
         memset(forkReturnPid, 0, sizeof(int) * numOfArgs);
 
-        for(int pipeIter = 0; pipeIter < numOfArgs; pipeIter++){
+        for (int pipeIter = 0; pipeIter < numOfArgs; pipeIter++) {
             forkReturnPid[pipeIter] = fork();
-            if(forkReturnPid[pipeIter] < 0){
+            if (forkReturnPid[pipeIter] < 0) {
                 #if debug
                     printf("Fork failed\n");
                 #endif
                 write(STDERR_FILENO, error_message, strlen(error_message));
                 free(args);
                 return 0;
-            } else if(forkReturnPid[pipeIter] == 0){
+            } else if (forkReturnPid[pipeIter] == 0) {
                 /*
                     CHILD PROCESS STARTS HERE
                 */
                 char **pipeArgs = (char **)malloc(sizeof(char *) * (strlen(args[pipeIter]) + 1));
-                if(ifPipe){
-                    if(pipeIter == 0)
+                if (ifPipe) {
+                    if (pipeIter == 0) {
                         /*
                             Changing the stdout of process 1 to pipe to send to next process
                         */
                         dup2(pipesFD[0][1], STDOUT_FILENO);
-                    else if(pipeIter == numOfArgs - 1 && numOfArgs != 2){
+                    } else if (pipeIter == numOfArgs - 1 && numOfArgs != 2) {
                         /*
                             If more than 1 pipe exists, change stdin of last process to pipe
                             to receive from previous process
@@ -235,10 +235,9 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                         /*
                             In case of redirect, set the stdout of last process to output file
                         */
-                        if(ifRedirect)
+                        if (ifRedirect)
 			                dup2(outFileHandler, STDOUT_FILENO);
-                    }
-                    else if (numOfArgs == 2){
+                    } else if (numOfArgs == 2) {
                         /*
                             If only one pipe exits, change stdin of process 2 to pipe
                             to receive from process 1
@@ -248,9 +247,9 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                         /*
                             In case of redirect, set the stdout of last process to output file
                         */
-                        if(ifRedirect)
+                        if (ifRedirect)
                             dup2(outFileHandler, STDOUT_FILENO);
-                    } else{
+                    } else {
                         /*
                             For all other cases, set stdin of process to pipe to receive input from
                             previous file and stdout of process to pipe to send to next process
@@ -266,16 +265,16 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                     stringSplitter(pipeArgs, args[pipeIter], " \n\t\r");
                 }
                 int execReturn = 0;
-                if(!ifPipe)
+                if (!ifPipe)
                     execReturn = execv(args[0], args);
                 else
                     execReturn = execv(pipeArgs[0], pipeArgs);
-                if (execReturn < 0){
+                if (execReturn < 0) {
                     #if debug
                         printf("Exec failed.\n");
                     #endif
 
-                    if(ifRedirect){
+                    if (ifRedirect) {
                         /*
                             If executable not found, do not redirect error to file
                         */
@@ -290,10 +289,10 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
                     CHILD PROCESS ENDS HERE
                 */
             }
-            if(!ifPipe)
+            if (!ifPipe)
                 break;
         }
-        if(ifPipe){
+        if (ifPipe) {
             close(pipesFD[0][1]);
             close(pipesFD[0][0]);
             close(pipesFD[1][1]);
@@ -304,9 +303,9 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
         /*
             Parent waits till all child processes exit
         */
-        for(int i = 0; i < numOfArgs; i++){
+        for (int i = 0; i < numOfArgs; i++) {
             waitpid(forkReturnPid[i], NULL, 0);
-            if(waitReturn < 0){
+            if (waitReturn < 0) {
                 #if debug
                     printf("Wait failed\n");
                 #endif
@@ -322,7 +321,7 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
     /*
         Flushing all buffers, closing files and restoring stdout & stderr
     */
-	if(ifRedirect){
+	if (ifRedirect) {
         fflush(stdout);
         fflush(stderr);
         close(outFileHandler);
@@ -341,40 +340,39 @@ int actionHandler(char * singleCommand, char * ifPipe, char * ifRedirect){
  * @param prompt Input command to check
  * @return int 1 if error, 0 otherwise
  */
-int redirectErrorHandler(char * prompt){
+int redirectErrorHandler(char * prompt) {
     char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-    for(int i = 0; i < numberOfCommands; i++){
-        char * ifRedirect = strchr(multipleCommands[i],'>');
+    for (int i = 0; i < numberOfCommands; i++) {
+        char * ifRedirect = strchr(multipleCommands[i], '>');
 
-        if(ifRedirect){
+        if (ifRedirect) {
             /*
                 Error if more than one redirect symbol present, pwd >> out, pwd > out > output
             */
             int numOfRedirects = 0;
             char * dummy = multipleCommands[i];
-            while(* dummy){
-                if(*dummy ++ == '>')
-                    numOfRedirects ++;
-                if(numOfRedirects > 1){
+            while (* dummy) {
+                if (*dummy++ == '>')
+                    numOfRedirects++;
+                if (numOfRedirects > 1) {
                     #if debug
                         printf("More than 1 redirect symbol found\n");
                     #endif
-                    write(STDERR_FILENO, error_message, strlen(error_message)); 
+                    write(STDERR_FILENO, error_message, strlen(error_message));
                     free(multipleCommands);
                     return 1;
                 }
             }
-
             
             char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "> \n\r\t");
             /*
                 Error if trying to redirect to output to more than one file, pwd > out output
             */
-            for(int i = 0; i < strlen(individualCommands[numOfCommands - 1]); i++){
-                if(isblank(individualCommands[numOfCommands - 1][i])){
+            for (int i = 0; i < strlen(individualCommands[numOfCommands - 1]); i++) {
+                if (isblank(individualCommands[numOfCommands - 1][i])) {
                     #if debug
                         printf("Cannot be redirected to more than one file\n");
                     #endif
@@ -388,11 +386,11 @@ int redirectErrorHandler(char * prompt){
             /*
                 Error if no commands are found to redirect, ls > or > output
             */
-            if(numOfCommands == 1){
+            if (numOfCommands == 1) {
                 #if debug
                     printf("No command to redirect\n");
                 #endif
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
+                write(STDERR_FILENO, error_message, strlen(error_message));
                 free(multipleCommands);
                 free(individualCommands);
                 return 1;
@@ -410,24 +408,24 @@ int redirectErrorHandler(char * prompt){
  * @param prompt Input command to check
  * @return int 1 if error, 0 otherwise
  */
-int pipeErrorHandler(char * prompt){
+int pipeErrorHandler(char * prompt) {
     char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
 
-    for(int i = 0; i < numberOfCommands; i++){
-        char * ifPipe = strchr(multipleCommands[i],'|');
+    for (int i = 0; i < numberOfCommands; i++) {
+        char * ifPipe = strchr(multipleCommands[i], '|');
 
-        if(ifPipe){
+        if (ifPipe) {
             char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             int numOfCommands = stringSplitter(individualCommands, multipleCommands[i], "| \n\r\t");
             /*
                 Error if no commands are found to pipe, ls | or | ls
             */
-            if(numOfCommands == 1){
+            if (numOfCommands == 1) {
                 #if debug
                     printf("No command to pipe\n");
                 #endif
-                write(STDERR_FILENO, error_message, strlen(error_message)); 
+                write(STDERR_FILENO, error_message, strlen(error_message));
                 free(multipleCommands);
                 free(individualCommands);
                 return 1;
@@ -446,18 +444,18 @@ int pipeErrorHandler(char * prompt){
  * @param loopIterStr Loop iterations in string (generated by this function)
  * @return int 1 if error, 0 otherwise
  */
-int loopErrorHandler(char * prompt, char * loopIterStr){
+int loopErrorHandler(char * prompt, char * loopIterStr) {
     char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
     int numOfCommands = stringSplitter(individualCommands, prompt, " \n\r\t");
     int flag = 0;
     /*
         Error if command is only "loop "
     */
-    if(numOfCommands < 2){
+    if (numOfCommands < 2) {
         #if debug
             printf("Only loop command found\n");
         #endif
-        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        write(STDERR_FILENO, error_message, strlen(error_message));
         free(individualCommands);
         return 1;
     }
@@ -465,17 +463,17 @@ int loopErrorHandler(char * prompt, char * loopIterStr){
     /*
         Error if loop iterations not specified "loop /bin/ls"
     */
-    for(int i = 0; i < strlen(individualCommands[1]); i++){
-        if(!isdigit((individualCommands[1][i]))){
+    for (int i = 0; i < strlen(individualCommands[1]); i++) {
+        if (!isdigit((individualCommands[1][i]))) {
             flag = 1;
             break;
         }
     }
-    if(flag){
+    if (flag) {
         #if debug
             printf("Loop iterations not specified\n");
         #endif
-        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        write(STDERR_FILENO, error_message, strlen(error_message));
         free(individualCommands);
         return 1;
     }
@@ -489,15 +487,14 @@ int loopErrorHandler(char * prompt, char * loopIterStr){
         Loop interations cannot be less than 1 
         or greater than maximum value of 4-byte integer variable
     */
-    if(loopIter < 1 || loopIter > 0x7FFFFFFF){
+    if (loopIter < 1 || loopIter > 0x7FFFFFFF) {
         #if debug
             printf("Loop iterations either 0 or overflowing int buffer\n");
         #endif
-        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        write(STDERR_FILENO, error_message, strlen(error_message));
         free(individualCommands);
         return 1;
     }
-    
     /*
         Copying the loop iterations into a string
         Needed to offset the command in main()
@@ -513,48 +510,46 @@ int loopErrorHandler(char * prompt, char * loopIterStr){
  * @param prompt String to be checked
  * @return int 0 if not a whitespace command, 1 otherwise
  */
-int whiteSpaceCommand(char * prompt){
+int whiteSpaceCommand(char * prompt) {
     int i = 0;
-    while(isspace(prompt[i])){
+    while (isspace(prompt[i])) {
         i++;
     }
-    if(i == strlen(prompt))
+    if (i == strlen(prompt))
         return 1;
     return 0;
 }
 
-int main(int argc, char *argv[]){
+int main(int argc, char *argv[]) {
     /*
         The executable doesn't accept any inputs
     */
-    if(argc > 1){
+    if (argc > 1) {
         #if debug
             printf("No arguments accepted. Exiting.\n");
         #endif
-        write(STDERR_FILENO, error_message, strlen(error_message)); 
+        write(STDERR_FILENO, error_message, strlen(error_message));
         return 1;
     }
-    
     /*
         Setting the default user input command size as 20
         getline() function can change this dynammically  
     */
     size_t promptSize = 20;
-    
-    while(1){
+    while (1) {
         char * prompt = (char *)malloc(sizeof(char) * promptSize);
 
         /*
             If whitespace characters, do nothing and get user input again
         */
-        do{
+        do {
             printf("smash> ");
             /*
                 Since no \n in the previous statement, fflush() is used to flush the buffer
             */
             fflush(stdout);
             int charactersRead = getline(&prompt, &promptSize, stdin);
-            if(charactersRead == -1){
+            if (charactersRead == -1) {
                 #if debug
                     printf("Failed to read command.\n");
                 #endif
@@ -565,7 +560,7 @@ int main(int argc, char *argv[]){
         }while(whiteSpaceCommand(prompt));
 
         #if debug
-            printf("Input Command: %s\n",prompt);
+            printf("Input Command: %s\n", prompt);
         #endif
 
         /*
@@ -578,16 +573,16 @@ int main(int argc, char *argv[]){
             Checking if the input command has a > or | to detect redirection or pipes
             Might be a bug in corner cases, haven't checked yet
         */
-        char * ifRedirect = strchr(prompt,'>');
-        char * ifPipe = strchr(prompt,'|');
+        char * ifRedirect = strchr(prompt, '>');
+        char * ifPipe = strchr(prompt, '|');
 
         /*
             If both redirection and pipes are present,
             redirection shouldn't happen before pipe
             since redirection doesn't give any input to pipe
         */
-        if(ifRedirect && ifPipe){
-            if(strlen(ifRedirect) > strlen(ifPipe)){
+        if (ifRedirect && ifPipe) {
+            if (strlen(ifRedirect) > strlen(ifPipe)) {
                 #if debug
                     printf("Cannot redirect twice\n");
                 #endif
@@ -597,23 +592,24 @@ int main(int argc, char *argv[]){
                 continue;
             }
         }
-        
         /*
             Checking other errors that might occur with redirection or pipes
             If errors exist, continue (for the while loop) and get new input
         */
-        if(ifRedirect)
-            if(redirectErrorHandler(promptDuplicate)){
+        if (ifRedirect) {
+            if (redirectErrorHandler(promptDuplicate)) {
                 free(promptDuplicate);
                 free(prompt);
                 continue;
             }
-        if(ifPipe)
-            if(pipeErrorHandler(promptDuplicate)){
+        }
+        if (ifPipe) {
+            if (pipeErrorHandler(promptDuplicate)) {
                 free(promptDuplicate);
                 free(prompt);
                 continue;
             }
+        }
         free(promptDuplicate);
 
         /*
@@ -621,8 +617,7 @@ int main(int argc, char *argv[]){
         */
         char **multipleCommands = (char **)malloc(sizeof(char *) * (strlen(prompt) + 1));
         int numberOfCommands = stringSplitter(multipleCommands, prompt, ";");
-        
-        for(int i = 0; i < numberOfCommands; i++){
+        for (int i = 0; i < numberOfCommands; i++) {
             char **individualCommands = (char **)malloc(sizeof(char *) * (strlen(multipleCommands[i]) + 1));
             /*
                 Assume there are no loops present in the input
@@ -635,7 +630,7 @@ int main(int argc, char *argv[]){
                 But if any file name or other executables named loops exists,
                 then there will be a wrong detection
             */
-            if( multipleCommands[i][0] == 'l' &&
+            if ( multipleCommands[i][0] == 'l' &&
                 multipleCommands[i][1] == 'o' &&
                 multipleCommands[i][2] == 'o' &&
                 multipleCommands[i][3] == 'p'
@@ -646,10 +641,10 @@ int main(int argc, char *argv[]){
                 If the command has no loops,
                 the command still has to run once
             */
-            if(!ifLoop)
+            if (!ifLoop)
                 loopIter = 1;
 
-            if(ifLoop){
+            if (ifLoop) {
                 /*
                     Limiting the looping iterations to the max value of 4-byte int
                     1 char extra for NULL
@@ -659,7 +654,7 @@ int main(int argc, char *argv[]){
                 /*
                     Checking for errors in the looping command implementation
                 */
-                if(loopErrorHandler(loopCommand, loopIterStr)){
+                if (loopErrorHandler(loopCommand, loopIterStr)) {
                     free(loopCommand);
                     continue;
                 }
@@ -671,27 +666,23 @@ int main(int argc, char *argv[]){
                 */
                 multipleCommands[i] += (6 + strlen(loopIterStr));
             }
-            
             char * loopCommand = strdup(multipleCommands[i]);
-            for(int numOfLoops = 0; numOfLoops < loopIter; numOfLoops++){
-
+            for (int numOfLoops = 0; numOfLoops < loopIter; numOfLoops++) {
                 /*
                     Checking if the command inside loop is whitespace
                     Might be redundant (since already checked in loopErrorHandler())
                     But shoudn't affect the implementation 
                 */
-                if(whiteSpaceCommand(multipleCommands[i]))
+                if (whiteSpaceCommand(multipleCommands[i]))
                     continue;
 
                 ifRedirect = strchr(multipleCommands[i], '>');
                 ifPipe = strchr(multipleCommands[i], '|');
-                
                 /*
                     Break if error detected. Currently, only detecting nested loops
                 */
-                if(actionHandler(multipleCommands[i], ifPipe, ifRedirect) < 0)
+                if (actionHandler(multipleCommands[i], ifPipe, ifRedirect) < 0)
                     break;
-                
                 /*
                     Copying the same command back since we need to run in a loop
                     Also, multipleCommands[i] would have been modified by stringSplitter()
