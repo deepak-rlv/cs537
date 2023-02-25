@@ -10,6 +10,10 @@
 #define SEG_TSS   6  // this process's task state
 #define NSEGS     7
 
+// Added by Deepak for CS537 SP'22 Project 4 
+#define max_stride  12  // max strides for stride schdeuler
+
+
 // Per-CPU state
 struct cpu {
   uchar id;                    // Local APIC ID; index into cpus[] below

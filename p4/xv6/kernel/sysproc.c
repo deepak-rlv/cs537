@@ -5,6 +5,8 @@
 #include "mmu.h"
 #include "proc.h"
 #include "sysfunc.h"
+//P4 addition
+#include "pstat.h"
 
 int
 sys_fork(void)
@@ -109,4 +111,13 @@ int sys_getprocstate(void){
     return -1;
 
   return getprocstate(pid, state, n);
+}
+
+// Written by Deepak for CS537 - P4
+int sys_settickets(void){
+
+}
+
+int sys_getpinfo(void){
+  
 }

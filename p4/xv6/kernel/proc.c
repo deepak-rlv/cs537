@@ -5,6 +5,8 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+//P4 addition
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -19,7 +21,10 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
-// Written by Deepak for CS537 - P2
+// Written by Deepak for CS537 - SP2022
+/*
+  Start of P2 additions
+*/
 int getnextpid(void){
   return nextpid;
 }
@@ -63,6 +68,23 @@ int getprocstate(int pid, char* state, int n){
     return -1;
   return 0;
 }
+/*
+  End of P2 additions
+*/
+
+/*
+  Start of P4 additions
+*/
+int settickets(int number){
+
+}
+
+int getpinfo(struct pstat *){
+
+}
+/*
+  End of P4 additions
+*/
 
 void
 pinit(void)

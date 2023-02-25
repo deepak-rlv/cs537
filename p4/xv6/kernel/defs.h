@@ -1,6 +1,9 @@
 #ifndef _DEFS_H_
 #define _DEFS_H_
 
+//P4 addition 
+#include "pstat.h"
+
 struct buf;
 struct context;
 struct file;
@@ -112,6 +115,10 @@ void            yield(void);
 // Written by Deepak for CS537 - P2
 int             getnextpid(void);
 int             getprocstate(int, char*, int);
+
+// Written by Deepak for CS537 - P4
+int             settickets(int);
+int             getpinfo(struct pstat *);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

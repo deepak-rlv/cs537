@@ -28,4 +28,8 @@ int sys_uptime(void);
 int sys_getnextpid(void);
 int sys_getprocstate(void);
 
+// Written by Deepak for CS537 - P4
+int sys_settickets(void);
+int sys_getpinfo(void);
+
 #endif // _SYSFUNC_H_
