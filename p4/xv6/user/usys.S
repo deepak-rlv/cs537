@@ -33,3 +33,7 @@ SYSCALL(uptime)
 // Written by Deepak for CS537 - P2
 SYSCALL(getnextpid)
 SYSCALL(getprocstate)
+
+// Written by Deepak for CS537 - P4
+SYSCALL(settickets)
+SYSCALL(getpinfo)

@@ -5,12 +5,13 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
-//P4 addition
+// CS537 - SP2022 - P4 additions
 #include "pstat.h"
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
+  struct pstat stats;
 } ptable;
 
 static struct proc *initproc;
@@ -47,7 +48,7 @@ int getprocstate(int pid, char* state, int n){
   /* Pointer to hold the state of the process before copying */
   char *dummy;
 
-  acquire(&ptable.lock);  
+  acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if((p->pid == pid)){ // Checking for pid hit
       processFound ++;
@@ -77,10 +78,16 @@ int getprocstate(int pid, char* state, int n){
 */
 int settickets(int number){
 
+  acquire(&ptable.lock);
+  ptable.stats.tickets[ptable.proc->pid - 1] = number;
+  ptable.stats.strides[ptable.proc->pid - 1] = max_stride / number;
+  release(&ptable.lock);
+
+  return 0;
 }
 
 int getpinfo(struct pstat *){
-
+  return 0;
 }
 /*
   End of P4 additions
@@ -112,6 +119,15 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+
+  // CS537 - SP2022 - P4 additions
+  int pidIndex = (p->pid) - 1;    // since array index starts from 0 & PID starts from 1
+  ptable.stats.inuse[pidIndex] = 1;
+  ptable.stats.tickets[pidIndex] = 1;
+  ptable.stats.strides[pidIndex] = max_stride;  // strides = max_strides/tickets
+  ptable.stats.pass[pidIndex] = max_stride;     // strides = max_strides/tickets
+  ptable.stats.pid[pidIndex] = p->pid;
+
   release(&ptable.lock);
 
   // Allocate kernel stack if possible.
@@ -211,6 +227,14 @@ fork(void)
   np->sz = proc->sz;
   np->parent = proc;
   *np->tf = *proc->tf;
+
+  // CS537 - SP2022 - P4 additions
+  int childPidIndex = np->pid - 1;
+  int parentPidIndex = proc->pid - 1;
+  ptable.stats.tickets[childPidIndex] = ptable.stats.tickets[parentPidIndex];
+  ptable.stats.strides[childPidIndex] = ptable.stats.strides[parentPidIndex];  
+  ptable.stats.pass[childPidIndex] = ptable.stats.pass[parentPidIndex];     
+  ptable.stats.pid[childPidIndex] = np->pid;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -328,11 +352,38 @@ scheduler(void)
     // Enable interrupts on this processor.
     sti();
 
-    // Loop over process table looking for process to run.
+    // CS537 - SP2022 - P4 additions
+    int minValIndex = 0;
+    int nothingRunnable = 1;
+    int minVal = ptable.stats.pass[minValIndex];
+    // Finding the index of minimum pass value
+    for(int i = 0; i < NPROC ; i++){
+      if(ptable.stats.inuse[i]) {
+        // Checking if the minValue process is RUNNABLE
+        if(ptable.proc[i].state == RUNNABLE) {
+          nothingRunnable = 0;
+          if(ptable.stats.pass[i] < minVal) {
+            minValIndex = i;
+          }
+        } else {
+          minValIndex = i + 1;
+        }
+        minVal = ptable.stats.pass[minValIndex];
+      }
+    }
+
+    // Adding this check so that the kernel can boot up
+    if(nothingRunnable)
+      continue;
+
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    p = &ptable.proc[minValIndex];
+
+    // Commenting the for loop used by the OG scheduler
+    // Loop over process table looking for process to run.
+    // for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    //   if(p->state != RUNNABLE)
+    //     continue;
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
@@ -340,13 +391,16 @@ scheduler(void)
       proc = p;
       switchuvm(p);
       p->state = RUNNING;
+
+      ptable.stats.ticks[minValIndex] ++;
+
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       proc = 0;
-    }
+    // }
     release(&ptable.lock);
 
   }
@@ -463,6 +517,10 @@ kill(int pid)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       p->killed = 1;
+
+      // CS537 - SP2022 - P4 additions
+      ptable.stats.inuse[p->pid - 1] = 0;
+
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;

@@ -6,7 +6,7 @@
 #include "x86.h"
 #include "syscall.h"
 #include "sysfunc.h"
-//P4 addition
+// CS537 - SP2022 - P4 additions
 #include "pstat.h"
 
 // User code makes a system call with INT T_SYSCALL.
@@ -107,10 +107,10 @@ static int (*syscalls[])(void) = {
 [SYS_uptime]  sys_uptime,
 // Written by Deepak for CS537 - P2
 [SYS_getnextpid]  sys_getnextpid,
-[SYS_getprocstate]  sys_getprocstate
+[SYS_getprocstate]  sys_getprocstate,
 
 // Written by Deepak for CS537 - P4
-[SYS_settickets]  sys_settickets
+[SYS_settickets]  sys_settickets,
 [SYS_getpinfo]  sys_getpinfo
 };
 

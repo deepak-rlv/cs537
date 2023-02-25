@@ -1,7 +1,7 @@
 #ifndef _DEFS_H_
 #define _DEFS_H_
 
-//P4 addition 
+// CS537 - SP2022 - P4 additions
 #include "pstat.h"
 
 struct buf;

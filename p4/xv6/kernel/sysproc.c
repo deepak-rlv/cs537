@@ -5,7 +5,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "sysfunc.h"
-//P4 addition
+// CS537 - SP2022 - P4 additions
 #include "pstat.h"
 
 int
@@ -115,9 +115,15 @@ int sys_getprocstate(void){
 
 // Written by Deepak for CS537 - P4
 int sys_settickets(void){
+  int ticketNumber = 0;
+  if(argint(0, &ticketNumber) < 0)
+    return -1;
 
+  if(ticketNumber < 1)
+    return -1;
+  return settickets(ticketNumber);
 }
 
 int sys_getpinfo(void){
-  
+  return 0;
 }
