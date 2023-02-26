@@ -1,6 +1,9 @@
 #ifndef _USER_H_
 #define _USER_H_
 
+// Written by Deepak for CS537 - P4
+#include "pstat.h"
+
 struct stat;
 
 // system calls
@@ -32,7 +35,7 @@ int getprocstate(int, char*, int);
 
 // Written by Deepak for CS537 - P4
 int settickets(int);
-// int getpstat(struct pstat *);
+int getpstat(struct pstat *);
 
 // user library functions (ulib.c)
 int stat(char*, struct stat*);

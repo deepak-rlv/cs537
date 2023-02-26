@@ -80,13 +80,23 @@ int settickets(int number){
 
   acquire(&ptable.lock);
   ptable.stats.tickets[ptable.proc->pid - 1] = number;
-  ptable.stats.strides[ptable.proc->pid - 1] = max_stride / number;
+  ptable.stats.strides[ptable.proc->pid - 1] = (int)(max_stride / number);
   release(&ptable.lock);
 
   return 0;
 }
 
-int getpinfo(struct pstat *){
+int getpinfo(struct pstat * pinfo){
+
+  for(int i = 0; i < NPROC ; i ++) {
+    if(!ptable.stats.inuse[i]) break;
+    pinfo->inuse[i] = ptable.stats.inuse[i];
+    pinfo->tickets[i] = ptable.stats.tickets[i];
+    pinfo->strides[i] = ptable.stats.strides[i];
+    pinfo->pass[i] = ptable.stats.pass[i];
+    pinfo->pid[i] = ptable.stats.pid[i];
+    pinfo->ticks[i] = ptable.stats.ticks[i];
+  }
   return 0;
 }
 /*
