@@ -79,8 +79,8 @@ int getprocstate(int pid, char* state, int n){
 int settickets(int number){
 
   acquire(&ptable.lock);
-  ptable.stats.tickets[ptable.proc->pid - 1] = number;
-  ptable.stats.strides[ptable.proc->pid - 1] = (int)(max_stride / number);
+  ptable.stats.tickets[proc->pid - 1] = number;
+  ptable.stats.strides[proc->pid - 1] = (int)(max_stride / number);
   release(&ptable.lock);
 
   return 0;
@@ -135,7 +135,7 @@ found:
   ptable.stats.inuse[pidIndex] = 1;
   ptable.stats.tickets[pidIndex] = 1;
   ptable.stats.strides[pidIndex] = max_stride;  // strides = max_strides/tickets
-  ptable.stats.pass[pidIndex] = max_stride;     // strides = max_strides/tickets
+  ptable.stats.pass[pidIndex] = max_stride;
   ptable.stats.pid[pidIndex] = p->pid;
 
   release(&ptable.lock);
@@ -364,28 +364,31 @@ scheduler(void)
 
     // CS537 - SP2022 - P4 additions
     int minValIndex = 0;
-    int nothingRunnable = 1;
-    int minVal = ptable.stats.pass[minValIndex];
+    // int nothingRunnable = 1;
+    int minVal = 0x7fffffff;//ptable.stats.pass[minValIndex];
     // Finding the index of minimum pass value
     for(int i = 0; i < NPROC ; i++){
       if(ptable.stats.inuse[i]) {
         // Checking if the minValue process is RUNNABLE
-        if(ptable.proc[i].state == RUNNABLE) {
-          nothingRunnable = 0;
-          if(ptable.stats.pass[i] < minVal) {
-            minValIndex = i;
-          }
-        } else {
-          minValIndex = i + 1;
+        // if(ptable.proc[i].state == RUNNABLE) {
+        //   nothingRunnable = 0;
+        //   if(ptable.stats.pass[i] < minVal) {
+        //     minValIndex = i;
+        //   }
+        // } else {
+        //   minValIndex = i + 1;
+        // }
+        // minVal = ptable.stats.pass[minValIndex];
+        if(ptable.proc[i].state == RUNNABLE && ptable.stats.pass[i] < minVal){
+          minVal = ptable.stats.pass[i];
+          minValIndex = i;
         }
-        minVal = ptable.stats.pass[minValIndex];
       }
     }
 
     // Adding this check so that the kernel can boot up
-    if(nothingRunnable)
+    if(minVal == 0x7fffffff)
       continue;
-
     acquire(&ptable.lock);
     p = &ptable.proc[minValIndex];
 
@@ -527,10 +530,6 @@ kill(int pid)
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     if(p->pid == pid){
       p->killed = 1;
-
-      // CS537 - SP2022 - P4 additions
-      ptable.stats.inuse[p->pid - 1] = 0;
-
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING)
         p->state = RUNNABLE;

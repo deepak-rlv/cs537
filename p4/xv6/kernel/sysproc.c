@@ -126,8 +126,8 @@ int sys_settickets(void){
 
 int sys_getpinfo(void){
 
-  struct pstat * pinfo = NULL;
-  if(argptr(1, (void *)&pinfo, sizeof(struct pstat)) < 0)
+  struct pstat * pinfo;
+  if(argptr(0, (void *)&pinfo, sizeof(struct pstat)) < 0)
     return -1;
 
   if(pinfo == NULL)
