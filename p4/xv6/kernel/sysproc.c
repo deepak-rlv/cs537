@@ -121,6 +121,7 @@ int sys_settickets(void){
 
   if(ticketNumber < 1)
     return -1;
+    
   return settickets(ticketNumber);
 }
 

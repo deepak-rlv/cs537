@@ -364,21 +364,10 @@ scheduler(void)
 
     // CS537 - SP2022 - P4 additions
     int minValIndex = 0;
-    // int nothingRunnable = 1;
-    int minVal = 0x7fffffff;//ptable.stats.pass[minValIndex];
+    int minVal = 0x7fffffff;
     // Finding the index of minimum pass value
     for(int i = 0; i < NPROC ; i++){
       if(ptable.stats.inuse[i]) {
-        // Checking if the minValue process is RUNNABLE
-        // if(ptable.proc[i].state == RUNNABLE) {
-        //   nothingRunnable = 0;
-        //   if(ptable.stats.pass[i] < minVal) {
-        //     minValIndex = i;
-        //   }
-        // } else {
-        //   minValIndex = i + 1;
-        // }
-        // minVal = ptable.stats.pass[minValIndex];
         if(ptable.proc[i].state == RUNNABLE && ptable.stats.pass[i] < minVal){
           minVal = ptable.stats.pass[i];
           minValIndex = i;
@@ -389,10 +378,12 @@ scheduler(void)
     // Adding this check so that the kernel can boot up
     if(minVal == 0x7fffffff)
       continue;
+
     acquire(&ptable.lock);
     p = &ptable.proc[minValIndex];
 
     // Commenting the for loop used by the OG scheduler
+
     // Loop over process table looking for process to run.
     // for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
     //   if(p->state != RUNNABLE)
@@ -415,7 +406,6 @@ scheduler(void)
       proc = 0;
     // }
     release(&ptable.lock);
-
   }
 }
 
