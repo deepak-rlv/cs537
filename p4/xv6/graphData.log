@@ -1,0 +1,203 @@
+************ Current-3************
+Tickets: 4
+Strides: 3
+Pass: 6
+PID: 4
+Ticks: 1
+CPU Ticks: 50
+************ Current-4************
+Tickets: 4
+Strides: 3
+Pass: 6
+PID: 5
+Ticks: 1
+CPU Ticks: 51
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 10
+PID: 4
+Ticks: 2
+CPU Ticks: 52
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 10
+PID: 4
+Ticks: 2
+CPU Ticks: 52
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 12
+PID: 5
+Ticks: 2
+CPU Ticks: 53
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 14
+PID: 4
+Ticks: 3
+CPU Ticks: 54
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 14
+PID: 4
+Ticks: 3
+CPU Ticks: 54
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 18
+PID: 5
+Ticks: 3
+CPU Ticks: 55
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 18
+PID: 4
+Ticks: 4
+CPU Ticks: 56
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 18
+PID: 4
+Ticks: 4
+CPU Ticks: 56
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 22
+PID: 4
+Ticks: 5
+CPU Ticks: 57
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 22
+PID: 4
+Ticks: 5
+CPU Ticks: 57
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 24
+PID: 5
+Ticks: 4
+CPU Ticks: 58
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 26
+PID: 4
+Ticks: 6
+CPU Ticks: 59
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 26
+PID: 4
+Ticks: 6
+CPU Ticks: 59
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 30
+PID: 5
+Ticks: 5
+CPU Ticks: 60
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 30
+PID: 4
+Ticks: 7
+CPU Ticks: 61
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 30
+PID: 4
+Ticks: 7
+CPU Ticks: 61
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 34
+PID: 4
+Ticks: 8
+CPU Ticks: 62
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 34
+PID: 4
+Ticks: 8
+CPU Ticks: 62
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 36
+PID: 5
+Ticks: 6
+CPU Ticks: 63
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 38
+PID: 4
+Ticks: 9
+CPU Ticks: 64
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 38
+PID: 4
+Ticks: 9
+CPU Ticks: 64
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 42
+PID: 5
+Ticks: 7
+CPU Ticks: 65
+************ Current-3************
+Tickets: 3
+Strides: 4
+Pass: 42
+PID: 4
+Ticks: 10
+CPU Ticks: 66
+************ Current-4************
+Tickets: 3
+Strides: 4
+Pass: 42
+PID: 4
+Ticks: 10
+CPU Ticks: 66
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 48
+PID: 5
+Ticks: 8
+CPU Ticks: 68
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 54
+PID: 5
+Ticks: 9
+CPU Ticks: 70
+************ Current-4************
+Tickets: 2
+Strides: 6
+Pass: 60
+PID: 5
+Ticks: 10
+CPU Ticks: 73
