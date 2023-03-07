@@ -7,6 +7,7 @@
 #include "spinlock.h"
 // CS537 - SP2022 - P4 additions
 #include "pstat.h"
+#define GRAPH 0
 
 struct {
   struct spinlock lock;
@@ -81,6 +82,8 @@ int settickets(int number){
   acquire(&ptable.lock);
   ptable.stats.tickets[proc->pid - 1] = number;
   ptable.stats.strides[proc->pid - 1] = (int)(max_stride / number);
+  if(ptable.stats.ticks[proc->pid - 1] == 0)
+    ptable.stats.pass[proc->pid - 1] = ptable.stats.strides[proc->pid - 1];
   release(&ptable.lock);
 
   return 0;
@@ -243,7 +246,7 @@ fork(void)
   int parentPidIndex = proc->pid - 1;
   ptable.stats.tickets[childPidIndex] = ptable.stats.tickets[parentPidIndex];
   ptable.stats.strides[childPidIndex] = ptable.stats.strides[parentPidIndex];  
-  ptable.stats.pass[childPidIndex] = ptable.stats.pass[parentPidIndex];     
+  ptable.stats.pass[childPidIndex] = ptable.stats.strides[childPidIndex];
   ptable.stats.pid[childPidIndex] = np->pid;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -346,6 +349,10 @@ wait(void)
   }
 }
 
+#if GRAPH
+  int cpuTicks = 0;
+  int prevMinValIndex = 0;
+#endif
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
 // Scheduler never returns.  It loops, doing:
@@ -382,6 +389,7 @@ scheduler(void)
     acquire(&ptable.lock);
     p = &ptable.proc[minValIndex];
 
+
     // Commenting the for loop used by the OG scheduler
 
     // Loop over process table looking for process to run.
@@ -396,8 +404,21 @@ scheduler(void)
       switchuvm(p);
       p->state = RUNNING;
 
-      ptable.stats.ticks[minValIndex] ++;
+      #if GRAPH
+      cpuTicks++;
+      if(ptable.stats.ticks[minValIndex] >= 0 && ptable.stats.ticks[minValIndex] <= 10){
+        cprintf("************ Current ************\nTickets: %d\nStrides: %d\nPass: %d\nPID: %d\nTicks: %d\nCPU Ticks: %d\n",ptable.stats.tickets[minValIndex],ptable.stats.strides[minValIndex],ptable.stats.pass[minValIndex],ptable.stats.pid[minValIndex],ptable.stats.ticks[minValIndex],cpuTicks);
+        cprintf("************ Prev ************\nTickets: %d\nStrides: %d\nPass: %d\nPID: %d\nTicks: %d\nCPU Ticks: %d\n",ptable.stats.tickets[prevMinValIndex],ptable.stats.strides[prevMinValIndex],ptable.stats.pass[prevMinValIndex],ptable.stats.pid[prevMinValIndex],ptable.stats.ticks[prevMinValIndex],cpuTicks);
+      }
+      #endif
 
+      ptable.stats.ticks[minValIndex] ++;
+      ptable.stats.pass[minValIndex] += ptable.stats.strides[minValIndex];
+
+      #if GRAPH
+        prevMinValIndex = minValIndex;
+      #endif
+      
       swtch(&cpu->scheduler, proc->context);
       switchkvm();
 

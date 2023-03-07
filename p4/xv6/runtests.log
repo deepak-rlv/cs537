@@ -9,27 +9,36 @@ build xv6 using make
 Trying to build project using make
 make
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
-	-M -MG kernel/sysproc.c -MF kernel/sysproc.d -MT kernel/sysproc.d -MT kernel/sysproc.o
-gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
-	-M -MG kernel/proc.c -MF kernel/proc.d -MT kernel/proc.d -MT kernel/proc.o
-gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o kernel/proc.o kernel/proc.c
-gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o kernel/sysproc.o kernel/sysproc.c
-ld  -m    elf_i386 -nostdlib --omagic \
-	--section-start=.text=0x100000 --entry=main --output=kernel/kernel \
-	kernel/multiboot.o kernel/data.o kernel/bio.o kernel/console.o kernel/exec.o kernel/file.o kernel/fs.o kernel/ide.o kernel/ioapic.o kernel/kalloc.o kernel/kbd.o kernel/lapic.o kernel/main.o kernel/mp.o kernel/picirq.o kernel/pipe.o kernel/proc.o kernel/spinlock.o kernel/string.o kernel/swtch.o kernel/syscall.o kernel/sysfile.o kernel/sysproc.o kernel/timer.o kernel/trapasm.o kernel/trap.o kernel/uart.o kernel/vectors.o kernel/vm.o \
-	-b binary initcode bootother
-dd if=/dev/zero of=xv6.img count=10000
-10000+0 records in
-10000+0 records out
-5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.0343696 s, 149 MB/s
-dd if=kernel/bootblock of=xv6.img conv=notrunc
-1+0 records in
-1+0 records out
-512 bytes copied, 0.000193995 s, 2.6 MB/s
-dd if=kernel/kernel of=xv6.img seek=1 conv=notrunc
-278+1 records in
-278+1 records out
-142732 bytes (143 kB, 139 KiB) copied, 0.00116332 s, 123 MB/s
+	-M -MG user/test_graph.c -MF user/test_graph.d -MT user/test_graph.d -MT user/test_graph.o
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o user/test_graph.o user/test_graph.c
+ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --output=user/bin/test_graph user/test_graph.o user/ulib.o user/usys.o user/printf.o user/umalloc.o
+cp user/bin/test_graph fs/test_graph
+./tools/mkfs fs.img fs
+used 29 (bit 1 ninode 26) free 29 total 1024
+p2test
+echo
+zombie
+ln
+grep
+init
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 547 blocks have been allocated
+balloc: write bitmap block at sector 28
+rm user/bin/test_graph
 
 
 test build PASSED
@@ -53,26 +62,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -91,8 +102,7 @@ iPXE (https://ipxe.org) 00:03.0 CA00 PCI2.10 PnP PMM+07F8B4A0+07ECB4A0 CA00
 Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
 
 
-Booting from Hard Disk...
-xv6...
+Booting from Hard Disk..xv6...
 cpu0: starting
 init: starting sh
 $ tester
@@ -121,26 +131,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 504 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 549 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -166,7 +178,6 @@ $ tester
 tester
 XV6_SCHEDULER	 SUCCESS
 
-
 test test_2 PASSED (1 of 1)
  (Tests to make sure default number of tickets is 1)
 
@@ -188,26 +199,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -255,26 +268,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -322,26 +337,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -367,7 +384,6 @@ $ tester
 tester
 XV6_SCHEDULER	 SUCCESS
 
-
 test test_5 PASSED (1 of 1)
  (Tests to make sure setting number of tickets fails for 0)
 
@@ -389,26 +405,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -456,26 +474,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -523,26 +543,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 503 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 548 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -568,6 +590,7 @@ $ tester
 tester
 XV6_SCHEDULER	 SUCCESS
 
+
 test test_8 PASSED (1 of 1)
  (Test to make sure getpinfo fails for large pids)
 
@@ -576,7 +599,7 @@ starting test_9
 **********************************************************************
 
 Test test_9
-Test to check that parent and child pids equal
+Test to check that parent and child tickets are set corretly
 
 **********************************************************************
 Running xv6 user progam /home/cs537-1/tests/P4/ctests/test_9.c
@@ -589,26 +612,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 504 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 549 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -637,7 +662,7 @@ XV6_SCHEDULER	 SUCCESS
 
 
 test test_9 PASSED (1 of 1)
- (Test to check that parent and child pids equal)
+ (Test to check that parent and child tickets are set corretly)
 
 starting test_10
 
@@ -657,26 +682,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 505 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 550 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -703,14 +730,14 @@ tester
 Spinning...
 
 **** PInfo ****
-pid: 1 tickets: 1 ticks: 17
+pid: 1 tickets: 1 ticks: 16
 pid: 2 tickets: 1 ticks: 19
-pid: 3 tickets: 1 ticks: 510
-pid: 4 tickets: 1 ticks: 500
-pid: 5 tickets: 1 ticks: 0
-pid: 6 tickets: 1 ticks: 0
-pid: 7 tickets: 1 ticks: 0
-pid: 8 tickets: 1 ticks: 0
+pid: 3 tickets: 1 ticks: 101
+pid: 4 tickets: 1 ticks: 100
+pid: 5 tickets: 1 ticks: 100
+pid: 6 tickets: 1 ticks: 100
+pid: 7 tickets: 1 ticks: 100
+pid: 8 tickets: 1 ticks: 100
 Number of processes in use 8
 XV6_SCHEDULER	 SUCCESS
 
@@ -736,26 +763,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 507 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 552 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -782,17 +811,17 @@ tester
 
  ****PInfo before**** 
 pid: 1 tickets: 1 ticks: 16
-pid: 2 tickets: 1 ticks: 20
-pid: 3 tickets: 5 ticks: 129
+pid: 2 tickets: 1 ticks: 19
+pid: 3 tickets: 5 ticks: 11
 pid: 4 tickets: 10000 ticks: 1
 Spinning...
 
  ****PInfo after**** 
 pid: 1 tickets: 1 ticks: 16
-pid: 2 tickets: 1 ticks: 20
-pid: 3 tickets: 5 ticks: 129
-pid: 4 tickets: 10000 ticks: 120
-high before: 1 high after: 120, low before: 129 low after: 129
+pid: 2 tickets: 1 ticks: 19
+pid: 3 tickets: 5 ticks: 11
+pid: 4 tickets: 10000 ticks: 54
+high before: 1 high after: 54, low before: 11 low after: 11
 XV6_SCHEDULER	 SUCCESS
 
 
@@ -817,26 +846,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 506 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 551 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -861,19 +892,19 @@ init: starting sh
 $ tester
 tester
 Printing for child: 1
-pid: 1, tickets: 1, stride: 12, pass: 12, ticks: 17
-pid: 2, tickets: 1, stride: 12, pass: 12, ticks: 20
-pid: 3, tickets: 1, stride: 12, pass: 12, ticks: 10
-pid: 4, tickets: 3, stride: 4, pass: 12, ticks: 274
-pid: 5, tickets: 1, stride: 12, pass: 12, ticks: 0
+pid: 1, tickets: 1, stride: 12, pass: 192, ticks: 15
+pid: 2, tickets: 1, stride: 12, pass: 240, ticks: 19
+pid: 3, tickets: 1, stride: 12, pass: 132, ticks: 10
+pid: 4, tickets: 3, stride: 4, pass: 484, ticks: 116
+pid: 5, tickets: 2, stride: 6, pass: 480, ticks: 77
 Child process 1 finished
 Child process 2 finished
 Printing for child: 2
-pid: 1, tickets: 1, stride: 12, pass: 12, ticks: 17
-pid: 2, tickets: 1, stride: 12, pass: 12, ticks: 20
-pid: 3, tickets: 1, stride: 12, pass: 12, ticks: 11
-pid: 4, tickets: 3, stride: 4, pass: 12, ticks: 275
-pid: 5, tickets: 2, stride: 6, pass: 12, ticks: 264
+pid: 1, tickets: 1, stride: 12, pass: 192, ticks: 15
+pid: 2, tickets: 1, stride: 12, pass: 240, ticks: 19
+pid: 3, tickets: 1, stride: 12, pass: 144, ticks: 11
+pid: 4, tickets: 3, stride: 4, pass: 484, ticks: 116
+pid: 5, tickets: 2, stride: 6, pass: 696, ticks: 113
 XV6_SCHEDULAR	 SUCCESS
 
 
@@ -898,26 +929,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 505 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 550 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -965,26 +998,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 504 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 549 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -1032,26 +1067,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 504 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 549 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -1099,26 +1136,28 @@ ld  -m    elf_i386 -nostdlib --omagic --entry=main --section-start=.text=0x0 --o
 cp user/bin/tester fs/tester
 ./tools/mkfs fs.img fs
 used 29 (bit 1 ninode 26) free 29 total 1024
-usertests
-p4test
-mkdir
-README
-tester
-ls
-kill
-ln
 p2test
-grep
-stressfs
-cat
-sh
-rm
 echo
-forktest
 zombie
-wc
+ln
+grep
 init
-balloc: first 504 blocks have been allocated
+sh
+README
+rm
+kill
+tester
+usertests
+test_graph
+p4test2
+ls
+stressfs
+p4test1
+forktest
+cat
+wc
+mkdir
+balloc: first 549 blocks have been allocated
 balloc: write bitmap block at sector 28
 rm user/bin/tester
 make qemu-nox CPUS=1
@@ -1178,7 +1217,7 @@ test test_8 PASSED (1 of 1)
  (Test to make sure getpinfo fails for large pids)
 
 test test_9 PASSED (1 of 1)
- (Test to check that parent and child pids equal)
+ (Test to check that parent and child tickets are set corretly)
 
 test test_10 PASSED (1 of 1)
  (Test to make sure the right number of processes are schedualed with fork)
