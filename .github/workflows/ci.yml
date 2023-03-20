@@ -7,5 +7,5 @@ jobs:
       steps:
         - name: Checkout the repo
           uses: actions/checkout@v3
-        - run: make
-        - run: make debug
+        - run: cd p1 && make
+        - run: cd p1 && make debug
