@@ -76,3 +76,6 @@ kalloc(void)
   return (char*)r;
 }
 
+int getFreePagesCount(void){
+  return kmem.free_pages;
+}

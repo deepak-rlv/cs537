@@ -67,6 +67,8 @@ char*           kalloc(void);
 void            kfree(char*);
 void            kinit(void);
 
+int             getFreePagesCount(void);
+
 // kbd.c
 void            kbdintr(void);
 
