@@ -26,12 +26,21 @@ struct {
 
 extern char end[]; // first address after kernel loaded from ELF file
 
+// Helper function to increment ref_cnt
+void increment_ref_cnt(void){
+  kmem.ref_cnt[(PHYSTOP-(int)kmem.freelist) / PGSIZE] ++;
+}
+
+// Helper function to decrement ref_cnt
+void decrement_ref_cnt(void){
+  kmem.ref_cnt[(PHYSTOP-(int)kmem.freelist) / PGSIZE] --;
+}
+
 // Initialize free list of physical pages.
 void
 kinit(void)
 {
   char *p;
-
   initlock(&kmem.lock, "kmem");
   p = (char*)PGROUNDUP((uint)end);
   for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE)
@@ -57,6 +66,12 @@ kfree(char *v)
   r = (struct run*)v;
   r->next = kmem.freelist;
   kmem.freelist = r;
+
+  if(!kmem.freelist)
+    decrement_ref_cnt();
+  
+  kmem.free_pages++;
+
   release(&kmem.lock);
 }
 
@@ -67,11 +82,21 @@ char*
 kalloc(void)
 {
   struct run *r;
-
   acquire(&kmem.lock);
   r = kmem.freelist;
-  if(r)
+
+  if(r){
+    if(kmem.ref_cnt[(PHYSTOP - (int)r) / PGSIZE] == 0)
+      kmem.ref_cnt[(PHYSTOP - (int)r) / PGSIZE] = 1;
+    else
+      increment_ref_cnt();
+
     kmem.freelist = r->next;
+
+    kmem.free_pages --;
+
+    cprintf("Ref Count of Page %d: %d\t\tFree Pages: %d\n", (PHYSTOP - (int)r) / PGSIZE, kmem.ref_cnt[(PHYSTOP - (int)r) / PGSIZE], kmem.free_pages);
+  }
   release(&kmem.lock);
   return (char*)r;
 }
