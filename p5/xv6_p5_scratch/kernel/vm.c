@@ -327,6 +327,38 @@ bad:
   return 0;
 }
 
+// Copy-on-Write page table implementation 
+pde_t*
+cowuvm(pde_t *pgdir, uint sz)
+{
+  pde_t *d;
+  pte_t *pte;
+  uint pa, i, flags;
+  char *mem;
+
+  if((d = setupkvm()) == 0)
+    return 0;
+  for(i = 0; i < sz; i += PGSIZE){
+    if((pte = walkpgdir(pgdir, (void*)i, 0)) == 0)
+      panic("cowuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("cowuvm: page not present");
+    pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte);
+    /* if((mem = kalloc()) == 0)
+      goto bad; */
+    
+    // memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(d, (void*)i, PGSIZE, PADDR(mem), flags) < 0)
+      goto bad;
+  }
+  return d;
+
+bad:
+  freevm(d);
+  return 0;
+}
+
 // Map user virtual address to kernel physical address.
 char*
 uva2ka(pde_t *pgdir, char *uva)
