@@ -66,6 +66,9 @@ void            ioapicinit(void);
 char*           kalloc(void);
 void            kfree(char*);
 void            kinit(void);
+void            increment_ref_cnt(uint *);
+void            decrement_ref_cnt(uint *);
+uint            getRefCount(uint *);
 
 int             getFreePagesCount(void);
 
@@ -167,6 +170,8 @@ void            freevm(pde_t*);
 void            inituvm(pde_t*, char*, uint);
 int             loaduvm(pde_t*, char*, struct inode*, uint, uint);
 pde_t*          copyuvm(pde_t*, uint);
+pde_t*          cowuvm(pde_t*, uint);
+void            cowuvm_pgflt_handler(void);
 void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);

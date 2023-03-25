@@ -333,8 +333,9 @@ cowuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
   pte_t *pte;
-  uint pa, i, flags;
-  char *mem;
+  uint i;
+  /* uint pa, i, flags;
+  char *mem; */
 
   if((d = setupkvm()) == 0)
     return 0;
@@ -343,20 +344,58 @@ cowuvm(pde_t *pgdir, uint sz)
       panic("cowuvm: pte should exist");
     if(!(*pte & PTE_P))
       panic("cowuvm: page not present");
-    pa = PTE_ADDR(*pte);
-    flags = PTE_FLAGS(*pte);
+    /* pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte); */
     /* if((mem = kalloc()) == 0)
       goto bad; */
+    increment_ref_cnt(pte);
+    if((*pte & PTE_W)){
+      *pte = *pte ^ PTE_W;
+      lcr3(PADDR(pgdir));
+    }
     
-    // memmove(mem, (char*)pa, PGSIZE);
+    /* memmove(mem, (char*)pa, PGSIZE);
     if(mappages(d, (void*)i, PGSIZE, PADDR(mem), flags) < 0)
-      goto bad;
+      goto bad; */
   }
   return d;
 
-bad:
+// bad:
   freevm(d);
   return 0;
+}
+
+// Copy-on-Write page table implementation 
+void cowuvm_pgflt_handler(void){
+  uint *faultVA = (uint *)rcr2();
+  uint *pgdir = (uint *)((uint)faultVA >> 22);
+  pte_t *pte = walkpgdir(pgdir, faultVA, 0);
+  if((*pte & PTE_P) == 0){
+    cprintf("CoW: Invalid virtual address");
+    proc->killed = 1;
+  }
+  if (getRefCount(pte) == 1){
+    lcr3(PADDR(pgdir));
+  }
+  if (getRefCount(pte) > 1){
+    decrement_ref_cnt(pte);
+    uint pa = PTE_ADDR(*pte);
+    uint flags = PTE_FLAGS(*pte);
+    char *mem;
+    if((mem = kalloc()) == 0){
+      freevm(pgdir);
+      return;
+    }
+    flags = flags ^ PTE_W;
+    memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(pgdir, (void*)0, PGSIZE, PADDR(mem), flags) < 0){
+      freevm(pgdir);
+      return;
+    }
+
+    lcr3(PADDR(pgdir));
+  }
+  
 }
 
 // Map user virtual address to kernel physical address.

@@ -46,7 +46,7 @@ trap(struct trapframe *tf)
 
   switch(tf->trapno){
   case T_PGFLT:
-    
+    cowuvm_pgflt_handler();
     break;
   case T_IRQ0 + IRQ_TIMER:
     if(cpu->id == 0){
