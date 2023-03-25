@@ -27,14 +27,14 @@ struct {
 extern char end[]; // first address after kernel loaded from ELF file
 
 // Helper function to increment ref_cnt
-void increment_ref_cnt(uint *pte){
+void increment_ref_cnt(uint pte){
   acquire(&kmem.lock);
   kmem.ref_cnt[(int)pte >> 12] ++;
   release(&kmem.lock);
 }
 
 // Helper function to decrement ref_cnt
-void decrement_ref_cnt(uint *pte){
+void decrement_ref_cnt(uint pte){
   acquire(&kmem.lock);
   kmem.ref_cnt[(int)pte >> 12] --;
   release(&kmem.lock);
@@ -53,7 +53,7 @@ kinit(void)
   p = (char*)PGROUNDUP((uint)end);
   for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE){
     kfree(p);
-    // kmem.ref_cnt[(int)p >> 12] = 1;
+    kmem.ref_cnt[(int)p >> 12] = 0;
   }
 }
 
@@ -96,14 +96,12 @@ kalloc(void)
   r = kmem.freelist;
 
   if(r){
-    if(kmem.ref_cnt[(int)r >> 12] == 0)
-      kmem.ref_cnt[(int)r >> 12] = 1;
+    // if(kmem.ref_cnt[(int)r >> 12] == 0)
+      kmem.ref_cnt[(int)r >> 12] ++;
 
     kmem.freelist = r->next;
 
     kmem.free_pages --;
-
-    // cprintf("Ref Count of Page %d: %d\t\tFree Pages: %d\n",  (int)r >> 12, kmem.ref_cnt[(int)r >> 12], kmem.free_pages);
   }
   release(&kmem.lock);
   return (char*)r;

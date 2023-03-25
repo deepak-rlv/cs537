@@ -66,8 +66,8 @@ void            ioapicinit(void);
 char*           kalloc(void);
 void            kfree(char*);
 void            kinit(void);
-void            increment_ref_cnt(uint *);
-void            decrement_ref_cnt(uint *);
+void            increment_ref_cnt(uint);
+void            decrement_ref_cnt(uint);
 uint            getRefCount(uint);
 
 int             getFreePagesCount(void);

@@ -333,9 +333,8 @@ cowuvm(pde_t *pgdir, uint sz)
 {
   pde_t *d;
   pte_t *pte;
-  uint i;
-  /* uint pa, i, flags;
-  char *mem; */
+  uint pa, i, flags;
+  // char *mem; 
 
   if((d = setupkvm()) == 0)
     return 0;
@@ -344,63 +343,61 @@ cowuvm(pde_t *pgdir, uint sz)
       panic("cowuvm: pte should exist");
     if(!(*pte & PTE_P))
       panic("cowuvm: page not present");
-    /* pa = PTE_ADDR(*pte);
-    flags = PTE_FLAGS(*pte); */
+    pa = PTE_ADDR(*pte);
+    flags = PTE_FLAGS(*pte);
     /* if((mem = kalloc()) == 0)
       goto bad; */
-    increment_ref_cnt(pte);
-  cprintf("Ref Count in cowuvm: %d\n", getRefCount(*pte));
+    increment_ref_cnt(*pte);
     if((*pte & PTE_W)){
-      *pte = *pte ^ PTE_W;
+      flags = flags ^ PTE_W;
       lcr3(PADDR(pgdir));
     }
     
-    /* memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(d, (void*)i, PGSIZE, PADDR(mem), flags) < 0)
-      goto bad; */
+    // memmove(mem, (char*)pa, PGSIZE);
+    if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0)
+      goto bad;
   }
   return d;
 
-// bad:
+bad:
   freevm(d);
   return 0;
 }
 
 // Copy-on-Write page table implementation 
 void cowuvm_pgflt_handler(pde_t *pgdir){
+  cprintf("page fault by %d\n", proc->pid);
   uint faultVA = rcr2();
   pte_t *pte = walkpgdir(pgdir, (void *)faultVA, 0);
   if((*pte & PTE_P) == 0){
-    cprintf("CoW: Invalid virtual address");
+    cprintf("CoW: Invalid virtual address\n");
     proc->killed = 1;
-  }
-  if(!(*pte & PTE_W)){
-    cprintf("Read only");
-  cprintf("Ref Count: %d\n", getRefCount(*pte));
     return;
   }
-  if (getRefCount(*pte) == 1){
-    lcr3(PADDR(pgdir));
-  }
-  if (getRefCount(*pte) > 1){
-    decrement_ref_cnt(pte);
-    uint pa = PTE_ADDR(*pte);
-    uint flags = PTE_FLAGS(*pte);
-    char *mem;
-    if((mem = kalloc()) == 0){
-      freevm(pgdir);
-      return;
+  if(!(*pte & PTE_W)){
+    cprintf("Ref count: %d\n", getRefCount(*pte));
+    if (getRefCount(*pte) == 1){
+      cprintf("1 ref count\n");
+      *pte = *pte ^ PTE_W;
+      lcr3(PADDR(pgdir));
     }
-    flags = flags ^ PTE_W;
-    memmove(mem, (char*)pa, PGSIZE);
-    if(mappages(pgdir, (void*)0, PGSIZE, PADDR(mem), flags) < 0){
-      freevm(pgdir);
-      return;
+    else if (getRefCount(*pte) > 1){
+      cprintf("> 1 ref count\n");
+      decrement_ref_cnt(*pte);
+      uint pa = PTE_ADDR(*pte);
+      uint flags = PTE_FLAGS(*pte);
+      char *mem;
+      if((mem = kalloc()) == 0){
+        return;
+      }
+      flags = flags ^ PTE_W;
+      memmove(mem, (char*)pa, PGSIZE);
+      cprintf("mem moved\n");
+      lcr3(PADDR(pgdir));
+      // pgdir |= 
     }
-
-    lcr3(PADDR(pgdir));
+    return;
   }
-  
 }
 
 // Map user virtual address to kernel physical address.
