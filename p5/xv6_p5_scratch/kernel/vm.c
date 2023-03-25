@@ -348,14 +348,15 @@ cowuvm(pde_t *pgdir, uint sz)
     /* if((mem = kalloc()) == 0)
       goto bad; */
     increment_ref_cnt(*pte);
-    if((*pte & PTE_W)){
+    if((flags & PTE_W)){
       flags = flags ^ PTE_W;
-      lcr3(PADDR(pgdir));
+      *pte = pa | flags;
     }
     
     // memmove(mem, (char*)pa, PGSIZE);
     if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0)
       goto bad;
+    lcr3(PADDR(pgdir));
   }
   return d;
 
@@ -364,7 +365,7 @@ bad:
   return 0;
 }
 
-// Copy-on-Write page table implementation 
+// Copy-on-Write page fault handler
 void cowuvm_pgflt_handler(pde_t *pgdir){
   cprintf("page fault by %d\n", proc->pid);
   uint faultVA = rcr2();
@@ -378,7 +379,10 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
     cprintf("Ref count: %d\n", getRefCount(*pte));
     if (getRefCount(*pte) == 1){
       cprintf("1 ref count\n");
-      *pte = *pte ^ PTE_W;
+      // uint pa = PTE_ADDR(*pte);
+      uint flags = PTE_FLAGS(*pte);
+      flags = flags ^ PTE_W;
+      *pte = PTE_ADDR(*pte) | flags;
       lcr3(PADDR(pgdir));
     }
     else if (getRefCount(*pte) > 1){
@@ -392,9 +396,10 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
       }
       flags = flags ^ PTE_W;
       memmove(mem, (char*)pa, PGSIZE);
-      cprintf("mem moved\n");
+      *pte = PTE_ADDR(*pte) | flags;
+      cprintf("PA %d\n",*pte);
+      cprintf("mem moved %d\n",*mem);
       lcr3(PADDR(pgdir));
-      // pgdir |= 
     }
     return;
   }

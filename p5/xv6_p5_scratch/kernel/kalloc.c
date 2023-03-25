@@ -76,8 +76,8 @@ kfree(char *v)
   r = (struct run*)v;
   r->next = kmem.freelist;
   kmem.freelist = r;
-  
-  kmem.ref_cnt[(int)r >> 12] --;
+  if(kmem.ref_cnt[(int)r >> 12]!=1)
+    kmem.ref_cnt[(int)r >> 12] --;
   // cprintf("Ref count: %d\tAddr: %d\n",kmem.ref_cnt[(int)r >> 12], (int)r);
 
   kmem.free_pages++;
