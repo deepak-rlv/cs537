@@ -40,7 +40,7 @@ void decrement_ref_cnt(uint *pte){
   release(&kmem.lock);
 }
 
-uint getRefCount(uint *pte){
+uint getRefCount(uint pte){
   return kmem.ref_cnt[(int)pte >> 12];
 }
 
@@ -51,8 +51,10 @@ kinit(void)
   char *p;
   initlock(&kmem.lock, "kmem");
   p = (char*)PGROUNDUP((uint)end);
-  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE)
+  for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE){
     kfree(p);
+    // kmem.ref_cnt[(int)p >> 12] = 1;
+  }
 }
 
 // Free the page of physical memory pointed at by v,
@@ -75,7 +77,8 @@ kfree(char *v)
   r->next = kmem.freelist;
   kmem.freelist = r;
   
-  kmem.ref_cnt[(int)r >> 12] = 1;
+  kmem.ref_cnt[(int)r >> 12] --;
+  // cprintf("Ref count: %d\tAddr: %d\n",kmem.ref_cnt[(int)r >> 12], (int)r);
 
   kmem.free_pages++;
 
@@ -100,7 +103,7 @@ kalloc(void)
 
     kmem.free_pages --;
 
-    cprintf("Ref Count of Page %d: %d\t\tFree Pages: %d\n",  (int)r >> 12, kmem.ref_cnt[(int)r >> 12], kmem.free_pages);
+    // cprintf("Ref Count of Page %d: %d\t\tFree Pages: %d\n",  (int)r >> 12, kmem.ref_cnt[(int)r >> 12], kmem.free_pages);
   }
   release(&kmem.lock);
   return (char*)r;
