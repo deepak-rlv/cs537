@@ -345,14 +345,16 @@ cowuvm(pde_t *pgdir, uint sz)
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
     increment_ref_cnt(*pte);
-    if((flags & PTE_W)){
+    /* if((flags & PTE_W)){
       flags = flags ^ PTE_W;
       *pte = pa | flags;
-    }
+    } */
+    *pte = *pte & ~PTE_W;
+    flags = flags & ~PTE_W;
+    lcr3(PADDR(pgdir));
     
     if(mappages(d, (void*)i, PGSIZE, pa, flags) < 0)
       goto bad;
-    lcr3(PADDR(pgdir));
   }
   return d;
 
@@ -368,7 +370,7 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
   pte_t *pte = walkpgdir(pgdir, (void *)faultVA, 0);
     // cprintf("Ref count: %d\n", getRefCount(*pte));
   if((*pte & PTE_P) == 0){
-    // cprintf("CoW: Invalid virtual address\n");
+    cprintf("CoW: Invalid virtual address\n");
     proc->killed = 1;
     return;
   }
@@ -376,7 +378,7 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
     // cprintf("Ref count: %d\n", getRefCount(*pte));
     if (getRefCount(*pte) == 1){
       // cprintf("1 ref count\n");
-      *pte = *pte ^ PTE_W;
+      *pte = *pte | PTE_W;
       lcr3(PADDR(pgdir));
     }
     else if (getRefCount(*pte) > 1){
@@ -388,7 +390,7 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
       if((mem = kalloc()) == 0){
         return;
       }
-      flags = flags ^ PTE_W;
+      flags = flags & ~PTE_W;
       memmove(mem, (char*)pa, PGSIZE);
       *pte = PADDR(mem) | flags;
       lcr3(PADDR(pgdir));
