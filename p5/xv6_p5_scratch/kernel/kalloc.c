@@ -52,8 +52,8 @@ kinit(void)
   initlock(&kmem.lock, "kmem");
   p = (char*)PGROUNDUP((uint)end);
   for(; p + PGSIZE <= (char*)PHYSTOP; p += PGSIZE){
-    kfree(p);
     kmem.ref_cnt[(int)p >> 12] = 0;
+    kfree(p);
   }
 }
 
@@ -70,17 +70,18 @@ kfree(char *v)
     panic("kfree");
 
   // Fill with junk to catch dangling refs.
-  memset(v, 1, PGSIZE);
 
   acquire(&kmem.lock);
   r = (struct run*)v;
-  r->next = kmem.freelist;
-  kmem.freelist = r;
-  // if(kmem.ref_cnt[(int)r >> 12]==2)
+  if(kmem.ref_cnt[(int)r >> 12] == 0){
+    memset(v, 1, PGSIZE);
+    r->next = kmem.freelist;
+    kmem.freelist = r;
+    kmem.free_pages++;
+  }
+  if(kmem.ref_cnt[(int)r >> 12] > 0)
     kmem.ref_cnt[(int)r >> 12] --;
-  // cprintf("Ref count: %d\tAddr: %d\n",kmem.ref_cnt[(int)r >> 12], (int)r);
 
-  kmem.free_pages++;
 
   release(&kmem.lock);
 }
@@ -96,8 +97,7 @@ kalloc(void)
   r = kmem.freelist;
 
   if(r){
-    // if(kmem.ref_cnt[(int)r >> 12] == 0)
-      kmem.ref_cnt[(int)r >> 12] ++;
+    kmem.ref_cnt[(int)r >> 12] = 1;
 
     kmem.freelist = r->next;
 

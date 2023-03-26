@@ -363,24 +363,24 @@ bad:
 
 // Copy-on-Write page fault handler
 void cowuvm_pgflt_handler(pde_t *pgdir){
-  cprintf("page fault by %d\n", proc->pid);
+  // cprintf("page fault by %d\n", proc->pid);
   uint faultVA = rcr2();
   pte_t *pte = walkpgdir(pgdir, (void *)faultVA, 0);
-    cprintf("Ref count: %d\n", getRefCount(*pte));
+    // cprintf("Ref count: %d\n", getRefCount(*pte));
   if((*pte & PTE_P) == 0){
-    cprintf("CoW: Invalid virtual address\n");
+    // cprintf("CoW: Invalid virtual address\n");
     proc->killed = 1;
     return;
   }
   if(!(*pte & PTE_W)){
-    cprintf("Ref count: %d\n", getRefCount(*pte));
+    // cprintf("Ref count: %d\n", getRefCount(*pte));
     if (getRefCount(*pte) == 1){
-      cprintf("1 ref count\n");
+      // cprintf("1 ref count\n");
       *pte = *pte ^ PTE_W;
       lcr3(PADDR(pgdir));
     }
     else if (getRefCount(*pte) > 1){
-      cprintf("> 1 ref count\n");
+      // cprintf("> 1 ref count\n");
       decrement_ref_cnt(*pte);
       uint pa = PTE_ADDR(*pte);
       uint flags = PTE_FLAGS(*pte);
