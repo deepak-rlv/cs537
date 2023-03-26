@@ -379,19 +379,22 @@ void cowuvm_pgflt_handler(pde_t *pgdir){
     if (getRefCount(*pte) == 1){
       // cprintf("1 ref count\n");
       *pte = *pte | PTE_W;
+lcr3(PADDR(pgdir));
     }
     else if (getRefCount(*pte) > 1){
       // cprintf("> 1 ref count\n");
       decrement_ref_cnt(*pte);
       uint pa = PTE_ADDR(*pte);
+uint flags = PTE_FLAGS(*pte);
       char *mem;
       if((mem = kalloc()) == 0){
         return;
       }
+flags = flags & ~PTE_W;
       memmove(mem, (char*)pa, PGSIZE);
-      *pte = PADDR(mem) | PTE_W;
+      *pte = PADDR(mem) | flags;
+lcr3(PADDR(pgdir));
     }
-    lcr3(PADDR(pgdir));
   }
 }
 
