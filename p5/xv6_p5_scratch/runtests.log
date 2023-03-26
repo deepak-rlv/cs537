@@ -10,6 +10,9 @@ Trying to build project using make
 make
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
 	-M -MG kernel/vm.c -MF kernel/vm.d -MT kernel/vm.d -MT kernel/vm.o
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 \
+	-M -MG kernel/kalloc.c -MF kernel/kalloc.d -MT kernel/kalloc.d -MT kernel/kalloc.o
+gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o kernel/kalloc.o kernel/kalloc.c
 gcc  -I include -nostdinc -Wall -Werror -ggdb -fno-pic -fno-builtin -fno-strict-aliasing -fno-stack-protector -m32 -c -o kernel/vm.o kernel/vm.c
 ld  -m    elf_i386 -nostdlib --omagic \
 	--section-start=.text=0x100000 --entry=main --output=kernel/kernel \
@@ -18,15 +21,15 @@ ld  -m    elf_i386 -nostdlib --omagic \
 dd if=/dev/zero of=xv6.img count=10000
 10000+0 records in
 10000+0 records out
-5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.00960733 s, 533 MB/s
+5120000 bytes (5.1 MB, 4.9 MiB) copied, 0.011181 s, 458 MB/s
 dd if=kernel/bootblock of=xv6.img conv=notrunc
 1+0 records in
 1+0 records out
-512 bytes copied, 5.2787e-05 s, 9.7 MB/s
+512 bytes copied, 4.9179e-05 s, 10.4 MB/s
 dd if=kernel/kernel of=xv6.img seek=1 conv=notrunc
 277+1 records in
 277+1 records out
-142136 bytes (142 kB, 139 KiB) copied, 0.000339811 s, 418 MB/s
+142120 bytes (142 kB, 139 KiB) copied, 0.000338654 s, 420 MB/s
 
 
 test build PASSED
@@ -222,7 +225,7 @@ init: starting sh
 $ tester
 tester
 XV6_COW	 FAILED
-$
+
 
 test test_3 FAILED (0 of 1)
  (Test that pages are copied on write and that the parent values are not affected by the child)
@@ -353,7 +356,6 @@ init: starting sh
 $ tester
 tester
 XV6_COW	 SUCCESS
-
 
 test test_5 PASSED (1 of 1)
  (Test that all pages are not copied when process forks - 2)
