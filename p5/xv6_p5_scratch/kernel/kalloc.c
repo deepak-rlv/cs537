@@ -73,13 +73,13 @@ kfree(char *v)
 
   acquire(&kmem.lock);
   r = (struct run*)v;
-  if(kmem.ref_cnt[(int)r >> 12] == 0){
+  if(kmem.ref_cnt[(int)r >> 12] <= 1){
     memset(v, 1, PGSIZE);
     r->next = kmem.freelist;
     kmem.freelist = r;
     kmem.free_pages++;
   }
-  if(kmem.ref_cnt[(int)r >> 12] > 0)
+  else
     kmem.ref_cnt[(int)r >> 12] --;
 
 
