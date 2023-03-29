@@ -15,5 +15,6 @@ jobs:
         image: logavaseekar/cs537-tester:latest
       steps:
         - name: Running provided tests
+          uses: actions/checkout@v3
         - run: make run
         - run: make clean
