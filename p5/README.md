@@ -8,9 +8,11 @@ Submitted by Deepak Charan Logavaseekaran (logavaseekar@wisc.edu)
 <br>
 **Wisc ID:** 908 495 9841
 <br>
-**Status:** 
-<br> <br>
-
-## **Implementation**
-
-All 11 tests passing
+**Status:** All 11 tests passing 
+<br>
+**Group:** 9
+<br>
+**Section:** Prof. Mike Swift's
+<br>
+**Partner's Name:** Vishal Naik
+<br>
