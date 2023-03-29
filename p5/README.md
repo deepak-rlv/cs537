@@ -10,9 +10,9 @@ Submitted by Deepak Charan Logavaseekaran (logavaseekar@wisc.edu)
 <br>
 **Status:** All 11 tests passing 
 <br>
-**Group:** 9
-<br>
 **Section:** Prof. Mike Swift's
+<br>
+**Group:** 9
 <br>
 **Partner's Name:** Vishal Naik
 <br>
