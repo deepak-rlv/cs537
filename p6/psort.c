@@ -37,8 +37,7 @@ typedef struct{
     char *val;
 } stream;
 
-void merge(char *arr, int l, int m, int r)
-{
+void merge(char *arr, int l, int m, int r) {
     int i, j, k;
     int n1 = (m - l)/100 + 1;
     int n2 = (r - m)/100;
@@ -81,8 +80,7 @@ void merge(char *arr, int l, int m, int r)
 }
  
 
-void mergeSort(char *inputMMAP, int l, int r)
-{
+void mergeSort(char *inputMMAP, int l, int r) {
     if (l < r) {
         int m = ((l + (r - l) / 2 ) / 100 ) * 100;
 
