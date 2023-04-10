@@ -34,22 +34,17 @@
 
 #include <errno.h>
 
-typedef struct{
-    int key;
-    char val[RECORD_SIZE - 4];
-} record;
-
 typedef struct {
-    record *input;
+    char **input;
     int start, end;
 } threadArgs;
 
-void merge(record *input, int start, int mid, int end) {
+void merge(char **input, int start, int mid, int end) {
     int i, j, k;
     int leftHalfElements = mid - start + 1;
     int rightHalfElements = end - mid;
 
-    record leftHalfArr[leftHalfElements], rightHalfArr[rightHalfElements];
+    char *leftHalfArr[leftHalfElements], *rightHalfArr[rightHalfElements];
 
     for (i = 0; i < leftHalfElements; i++)
         leftHalfArr[i] = input[start + i];
@@ -61,7 +56,9 @@ void merge(record *input, int start, int mid, int end) {
     k = start;
 
     while (i < leftHalfElements && j < rightHalfElements) {
-        if (leftHalfArr[i].key <= rightHalfArr[j].key) {
+        int key1 = *(int *)leftHalfArr[i];
+        int key2 = *(int *)rightHalfArr[j];
+        if (*(int *)leftHalfArr[i] <= *(int *)rightHalfArr[j]) {
             input[k] = leftHalfArr[i];
             i++;
         }
@@ -86,7 +83,7 @@ void merge(record *input, int start, int mid, int end) {
 }
  
 
-void mergeSort(record *inputMMAP, int start, int end) {
+void mergeSort(char **inputMMAP, int start, int end) {
     if (start < end) {
         int mid = start + (end - start) / 2;
 
@@ -159,23 +156,23 @@ int main(int argc, char *argv[]) {
     threadArgs arguments;
     int mid = entries / numOfThreads;
 
-    record backup[entries];
+    // record backup[entries];
+
+    char *backup[entries];
 
     char * inputRecords = (char *)mmap(NULL, inputFileStats.st_size, PROT_READ, MAP_SHARED, inputFD, 0);
     close(inputFD);
 
     for(int i = 0; i < entries; i++) {
-        backup[i].key = *(int *)(inputRecords + i * RECORD_SIZE);
-        memcpy(backup[i].val, inputRecords + 4 + i * RECORD_SIZE, RECORD_SIZE - 4);
+        backup[i] = inputRecords + (i * RECORD_SIZE);
     }
-    munmap((void *)inputRecords, inputFileStats.st_size);
 
     pthread_t threads[numOfThreads];
 
     for(int i = 0; i < numOfThreads; i++) {
         arguments.start = i * mid;
         arguments.end = arguments.start + mid - 1;
-        arguments.input = backup;
+        arguments.input = &backup[i];
         pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);   
     }
 
@@ -184,8 +181,10 @@ int main(int argc, char *argv[]) {
     }
 
     for(int i = 0; i < entries; i++) {
-        write(outputFD, (void *)&backup[i], RECORD_SIZE);
+        write(outputFD, (void *)*(backup + i), RECORD_SIZE);
     }
+    
+    munmap((void *)inputRecords, inputFileStats.st_size);
     fflush(NULL);
     close(outputFD);
 
