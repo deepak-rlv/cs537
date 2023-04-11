@@ -35,19 +35,26 @@
 
 #include <errno.h>
 
+
+typedef struct{
+    char *rec;
+} records;
+
 typedef struct {
-    char **input;
+    records *input;
     int start, end;
 } threadArgs;
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
-void merge(char **input, int start, int mid, int end) {
+void merge(records *input, int start, int mid, int end) {
     int i, j, k;
     int leftHalfElements = mid - start + 1;
     int rightHalfElements = end - mid;
 
-    char *leftHalfArr[leftHalfElements], *rightHalfArr[rightHalfElements];
+    // records leftHalfArr[leftHalfElements], rightHalfArr[rightHalfElements];
+    records *leftHalfArr = (records *)malloc(leftHalfElements * sizeof(records));
+    records *rightHalfArr = (records *)malloc(rightHalfElements * sizeof(records));
 
     for (i = 0; i < leftHalfElements; i++)
         leftHalfArr[i] = input[start + i];
@@ -59,31 +66,41 @@ void merge(char **input, int start, int mid, int end) {
     k = start;
 
     while (i < leftHalfElements && j < rightHalfElements) {
-        if (*(int *)leftHalfArr[i] <= *(int *)rightHalfArr[j]) {
+        if (*(int *)leftHalfArr[i].rec <= *(int *)rightHalfArr[j].rec) {
+    // pthread_mutex_lock(&lock);
             input[k] = leftHalfArr[i];
+    // pthread_mutex_unlock(&lock);
             i++;
         }
         else {
+    // pthread_mutex_lock(&lock);
             input[k] = rightHalfArr[j];
+    // pthread_mutex_unlock(&lock);
             j++;
         }
         k++;
     }
 
     while (i < leftHalfElements) {
+    // pthread_mutex_lock(&lock);
         input[k] = leftHalfArr[i];
+    // pthread_mutex_unlock(&lock);
         i++;
         k++;
     }
 
     while (j < rightHalfElements) {
+    // pthread_mutex_lock(&lock);
         input[k] = rightHalfArr[j];
+    // pthread_mutex_unlock(&lock);
         j++;
         k++;
     }
+    free (leftHalfArr);
+    free (rightHalfArr);
 }
 
-void mergeSort(char **inputMMAP, int start, int end) {
+void mergeSort(records *inputMMAP, int start, int end) {
     if (start < end) {
         int mid = start + (end - start) / 2;
 
@@ -95,10 +112,15 @@ void mergeSort(char **inputMMAP, int start, int end) {
 }
 
 void mergeHelper(void *args) {
-    pthread_mutex_lock(&lock);
+    // pthread_mutex_lock(&lock);
     threadArgs *dummy = (threadArgs*) args;
-    mergeSort(dummy->input, dummy->start, dummy->end);
-    pthread_mutex_unlock(&lock);
+    int mid = dummy->start + (dummy->end - dummy->start) / 2;
+    if(dummy->start < dummy->end){
+        mergeSort(dummy->input, dummy->start, mid);
+        mergeSort(dummy->input, mid + 1, dummy->end);
+        merge(dummy->input, dummy->start, mid, dummy->end);
+    }
+    // pthread_mutex_unlock(&lock);
 }
 
 int main(int argc, char *argv[]) {
@@ -149,9 +171,9 @@ int main(int argc, char *argv[]) {
     char * inputRecords = (char *)mmap(NULL, inputFileStats.st_size, PROT_READ, MAP_SHARED, inputFD, 0);
     close(inputFD);
 
-    char * backup[entries];
+    records *duplicateRecords = (records *)malloc(entries * sizeof(records));
     for(int i = 0; i < entries; i++) {
-        backup[i] = inputRecords + (i * RECORD_SIZE);
+        duplicateRecords[i].rec = inputRecords + (i * RECORD_SIZE);
     }
 
     char *outputFile = argv[2];
@@ -160,7 +182,7 @@ int main(int argc, char *argv[]) {
     #endif
 
     int outputFD;
-    if((outputFD = open(outputFile, O_CREAT | O_WRONLY, 0600)) == -1) {
+    if((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
         #if debug
             printf("Output open failed\n");
         #endif
@@ -177,21 +199,30 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < numOfThreads; i++) {
         arguments.start = i * mid;
         arguments.end = arguments.start + mid - 1;
-        arguments.input = backup;
-        pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);   
+        arguments.input = duplicateRecords;
+        pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);
     }
 
     for(int i = 0; i < numOfThreads; i++) {
         pthread_join(threads[i], NULL);
     }
 
+    /* int fake = open("fake", O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR);
+    for(int i = 0; i < entries; i++) {
+        if(write(fake, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
+            #if debug
+                printf("Write to output file failed\n");
+            #endif
+        }
+    } */
+
     for(int i = 0; i < numOfThreads - 1; i++) {
-        mergeSort(backup, 0,  entries - 1);
+        mergeSort(duplicateRecords, 0,  entries - 1);
     }
     endTime = clock();
 
     for(int i = 0; i < entries; i++) {
-        if(write(outputFD, (void *)*(backup + i), RECORD_SIZE) == -1) {
+        if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
             #if debug
                 printf("Write to output file failed\n");
             #endif
