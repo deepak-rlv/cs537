@@ -82,7 +82,6 @@ void merge(char **input, int start, int mid, int end) {
         k++;
     }
 }
- 
 
 void mergeSort(char **inputMMAP, int start, int end) {
     if (start < end) {
@@ -118,23 +117,23 @@ int main(int argc, char *argv[]) {
     */
     int numOfThreads = atoi(argv[3]);
     if(numOfThreads < MIN_THREADS) {
-        #ifdef debug
+        #if debug
             printf("Number of threads cannot be less than 1\n");
         #endif
         return 0;
     }
-    #ifdef debug
+    #if debug
         printf("Number of threads: %d\n", numOfThreads);
     #endif
 
     char *inputFile = argv[1];
-    #ifdef debug
+    #if debug
         printf("Input File: %s\n", inputFile);
     #endif
 
     int inputFD;
     if((inputFD = open(inputFile, O_RDWR)) == -1) {
-        #ifdef debug
+        #if debug
             printf("Input open failed\n");
         #endif
         return 0;
@@ -143,7 +142,7 @@ int main(int argc, char *argv[]) {
     struct stat inputFileStats;
     fstat(inputFD, &inputFileStats);
     const int entries = inputFileStats.st_size / RECORD_SIZE;
-    #ifdef debug
+    #if debug
         printf("Number of entries in the input file: %d\n", entries);
     #endif
 
@@ -156,13 +155,13 @@ int main(int argc, char *argv[]) {
     }
 
     char *outputFile = argv[2];
-    #ifdef debug
+    #if debug
         printf("Output File: %s\n", outputFile);
     #endif
 
     int outputFD;
     if((outputFD = open(outputFile, O_CREAT | O_WRONLY, 0600)) == -1) {
-        #ifdef debug
+        #if debug
             printf("Output open failed\n");
         #endif
         return 0;
@@ -192,10 +191,11 @@ int main(int argc, char *argv[]) {
     endTime = clock();
 
     for(int i = 0; i < entries; i++) {
-        if(write(outputFD, (void *)*(backup + i), RECORD_SIZE) == -1)
-            #ifdef debug
+        if(write(outputFD, (void *)*(backup + i), RECORD_SIZE) == -1) {
+            #if debug
                 printf("Write to output file failed\n");
             #endif
+        }
     }
 
     printf("Time taken: %lf\n", (endTime - startTime) / (double)CLOCKS_PER_SEC);
