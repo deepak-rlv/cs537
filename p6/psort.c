@@ -2,12 +2,10 @@
  * @file psort.c
  * @author Deepak Charan Logavaseekaran (logavaseekar@wisc.edu)
  * @author Vishal Naik (vvnaik2@wisc.edu)
- * @brief 
- * @version 0.1
- * @date 2023-04-06
- * 
+ * @brief Parallel Sort to leverage multi-processors
+ * @version 2.0
+ * @date 2023-04-11
  * @copyend Copyend (c) 2023
- * 
  */
 
 /*
@@ -33,9 +31,6 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 
-#include <errno.h>
-
-
 typedef struct{
     char *rec;
 } records;
@@ -47,19 +42,26 @@ typedef struct {
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
+/**
+ * @brief Function to merge lists based on input indexes
+ * 
+ * @param input pointer to struct records that holds pointer to the actual records read
+ * @param start starting index of the records to merge
+ * @param mid middle index of the records to merge
+ * @param end end index of the records to merge
+ */
 void merge(records *input, int start, int mid, int end) {
     int i, j, k;
     int leftHalfElements = mid - start + 1;
     int rightHalfElements = end - mid;
 
-    // records leftHalfArr[leftHalfElements], rightHalfArr[rightHalfElements];
     records *leftHalfArr = (records *)malloc(leftHalfElements * sizeof(records));
     records *rightHalfArr = (records *)malloc(rightHalfElements * sizeof(records));
 
     for (i = 0; i < leftHalfElements; i++)
         leftHalfArr[i] = input[start + i];
-    for (j = 0; j < rightHalfElements; j++)
-        rightHalfArr[j] = input[mid + j + 1];
+    for (i = 0; i < rightHalfElements; i++)
+        rightHalfArr[i] = input[mid + i + 1];
 
     i = 0;
     j = 0;
@@ -67,32 +69,24 @@ void merge(records *input, int start, int mid, int end) {
 
     while (i < leftHalfElements && j < rightHalfElements) {
         if (*(int *)leftHalfArr[i].rec <= *(int *)rightHalfArr[j].rec) {
-    // pthread_mutex_lock(&lock);
             input[k] = leftHalfArr[i];
-    // pthread_mutex_unlock(&lock);
             i++;
         }
         else {
-    // pthread_mutex_lock(&lock);
             input[k] = rightHalfArr[j];
-    // pthread_mutex_unlock(&lock);
             j++;
         }
         k++;
     }
 
     while (i < leftHalfElements) {
-    // pthread_mutex_lock(&lock);
         input[k] = leftHalfArr[i];
-    // pthread_mutex_unlock(&lock);
         i++;
         k++;
     }
 
     while (j < rightHalfElements) {
-    // pthread_mutex_lock(&lock);
         input[k] = rightHalfArr[j];
-    // pthread_mutex_unlock(&lock);
         j++;
         k++;
     }
@@ -100,19 +94,30 @@ void merge(records *input, int start, int mid, int end) {
     free (rightHalfArr);
 }
 
-void mergeSort(records *inputMMAP, int start, int end) {
+/**
+ * @brief Function to recursively split the list and merge
+ * 
+ * @param input pointer to struct records that holds pointer to the actual records read
+ * @param start starting index of the records to merge
+ * @param end end index of the records to merge
+ */
+void mergeSort(records *input, int start, int end) {
     if (start < end) {
         int mid = start + (end - start) / 2;
 
-        mergeSort(inputMMAP, start, mid);
-        mergeSort(inputMMAP, mid + 1, end);
+        mergeSort(input, start, mid);
+        mergeSort(input, mid + 1, end);
 
-        merge(inputMMAP, start, mid, end);
+        merge(input, start, mid, end);
     }
 }
 
+/**
+ * @brief Function to extract the arguments from the thread structure
+ * 
+ * @param args input argument for each thread
+ */
 void mergeHelper(void *args) {
-    // pthread_mutex_lock(&lock);
     threadArgs *dummy = (threadArgs*) args;
     int mid = dummy->start + (dummy->end - dummy->start) / 2;
     if(dummy->start < dummy->end){
@@ -120,7 +125,6 @@ void mergeHelper(void *args) {
         mergeSort(dummy->input, mid + 1, dummy->end);
         merge(dummy->input, dummy->start, mid, dummy->end);
     }
-    // pthread_mutex_unlock(&lock);
 }
 
 int main(int argc, char *argv[]) {
@@ -180,7 +184,7 @@ int main(int argc, char *argv[]) {
     #if debug
         printf("Output File: %s\n", outputFile);
     #endif
-
+    
     int outputFD;
     if((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
         #if debug
@@ -206,15 +210,6 @@ int main(int argc, char *argv[]) {
     for(int i = 0; i < numOfThreads; i++) {
         pthread_join(threads[i], NULL);
     }
-
-    /* int fake = open("fake", O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR);
-    for(int i = 0; i < entries; i++) {
-        if(write(fake, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
-            #if debug
-                printf("Write to output file failed\n");
-            #endif
-        }
-    } */
 
     for(int i = 0; i < numOfThreads - 1; i++) {
         mergeSort(duplicateRecords, 0,  entries - 1);
