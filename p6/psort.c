@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+#include <time.h>
 #include <unistd.h>
 #include <pthread.h>
 #include <sys/types.h>
@@ -38,6 +39,8 @@ typedef struct {
     char **input;
     int start, end;
 } threadArgs;
+
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void merge(char **input, int start, int mid, int end) {
     int i, j, k;
@@ -56,8 +59,6 @@ void merge(char **input, int start, int mid, int end) {
     k = start;
 
     while (i < leftHalfElements && j < rightHalfElements) {
-        int key1 = *(int *)leftHalfArr[i];
-        int key2 = *(int *)rightHalfArr[j];
         if (*(int *)leftHalfArr[i] <= *(int *)rightHalfArr[j]) {
             input[k] = leftHalfArr[i];
             i++;
@@ -95,8 +96,10 @@ void mergeSort(char **inputMMAP, int start, int end) {
 }
 
 void mergeHelper(void *args) {
+    pthread_mutex_lock(&lock);
     threadArgs *dummy = (threadArgs*) args;
     mergeSort(dummy->input, dummy->start, dummy->end);
+    pthread_mutex_unlock(&lock);
 }
 
 int main(int argc, char *argv[]) {
@@ -125,23 +128,14 @@ int main(int argc, char *argv[]) {
     #endif
 
     char *inputFile = argv[1];
-    char *outputFile = argv[2];
     #ifdef debug
-        printf("Input File: %s\nOutput File: %s\n", inputFile, outputFile);
+        printf("Input File: %s\n", inputFile);
     #endif
 
     int inputFD;
     if((inputFD = open(inputFile, O_RDWR)) == -1) {
         #ifdef debug
             printf("Input open failed\n");
-        #endif
-        return 0;
-    }
-
-    int outputFD;
-    if((outputFD = open(outputFile, O_CREAT | O_WRONLY, 0600)) == -1) {
-        #ifdef debug
-            printf("Output open failed\n");
         #endif
         return 0;
     }
@@ -153,26 +147,38 @@ int main(int argc, char *argv[]) {
         printf("Number of entries in the input file: %d\n", entries);
     #endif
 
-    threadArgs arguments;
-    int mid = entries / numOfThreads;
-
-    // record backup[entries];
-
-    char *backup[entries];
-
     char * inputRecords = (char *)mmap(NULL, inputFileStats.st_size, PROT_READ, MAP_SHARED, inputFD, 0);
     close(inputFD);
 
+    char * backup[entries];
     for(int i = 0; i < entries; i++) {
         backup[i] = inputRecords + (i * RECORD_SIZE);
     }
 
-    pthread_t threads[numOfThreads];
+    char *outputFile = argv[2];
+    #ifdef debug
+        printf("Output File: %s\n", outputFile);
+    #endif
 
+    int outputFD;
+    if((outputFD = open(outputFile, O_CREAT | O_WRONLY, 0600)) == -1) {
+        #ifdef debug
+            printf("Output open failed\n");
+        #endif
+        return 0;
+    }
+
+    threadArgs arguments;
+    pthread_t threads[numOfThreads];
+    int mid = entries / numOfThreads;
+
+    clock_t startTime, endTime;
+
+    startTime = clock();
     for(int i = 0; i < numOfThreads; i++) {
         arguments.start = i * mid;
         arguments.end = arguments.start + mid - 1;
-        arguments.input = &backup[i];
+        arguments.input = backup;
         pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);   
     }
 
@@ -180,10 +186,20 @@ int main(int argc, char *argv[]) {
         pthread_join(threads[i], NULL);
     }
 
-    for(int i = 0; i < entries; i++) {
-        write(outputFD, (void *)*(backup + i), RECORD_SIZE);
+    for(int i = 0; i < numOfThreads - 1; i++) {
+        mergeSort(backup, 0,  entries - 1);
     }
-    
+    endTime = clock();
+
+    for(int i = 0; i < entries; i++) {
+        if(write(outputFD, (void *)*(backup + i), RECORD_SIZE) == -1)
+            #ifdef debug
+                printf("Write to output file failed\n");
+            #endif
+    }
+
+    printf("Time taken: %lf\n", (endTime - startTime) / (double)CLOCKS_PER_SEC);
+
     munmap((void *)inputRecords, inputFileStats.st_size);
     fflush(NULL);
     close(outputFD);
