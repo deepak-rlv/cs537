@@ -65,6 +65,7 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * @param end end index of the records to merge
  */
 void merge(records *input, int start, int mid, int end) {
+    pthread_mutex_lock(&lock);
     int i, j, k;
     int leftHalfElements = mid - start + 1;
     int rightHalfElements = end - mid;
@@ -106,6 +107,7 @@ void merge(records *input, int start, int mid, int end) {
     }
     free (leftHalfArr);
     free (rightHalfArr);
+    pthread_mutex_unlock(&lock);
 }
 
 /**
@@ -199,11 +201,11 @@ int main(int argc, char *argv[]) {
     /*
         Inspired from rcheck.c
     */
-    records *c = duplicateRecords;
-    for (char *r = inputRecords; r < inputRecords + entries * 100; r += 100) {
-        c->key = *(int *)r;
-        c->rec = r;
-        c++;
+    records *dummy = duplicateRecords;
+    for (char *i = inputRecords; i < inputRecords + entries * 100; i += 100) {
+        dummy->key = *(int *)i;
+        dummy->rec = i;
+        dummy++;
     }
 
     char *outputFile = argv[2];
