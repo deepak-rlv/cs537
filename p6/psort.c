@@ -9,6 +9,11 @@
  */
 
 /*
+Ref: https://www.prowaretech.com/articles/current/c-plus-plus/algorithms/merge-sort-parallel#!
+Ref: https://www.geeksforgeeks.org/merge-sort-using-multi-threading/
+*/
+
+/*
     Set flag to 1 to view debug information
     By default, set to 0
 */
@@ -32,13 +37,22 @@
 #include <sys/mman.h>
 
 typedef struct{
+    int key;
     char *rec;
 } records;
 
 typedef struct {
     records *input;
-    int start, end;
+    int threads;
+    uint entries;
 } threadArgs;
+
+typedef struct {
+    int start;
+    int end;
+} threadData;
+
+int id = 0;
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -68,7 +82,7 @@ void merge(records *input, int start, int mid, int end) {
     k = start;
 
     while (i < leftHalfElements && j < rightHalfElements) {
-        if (*(int *)leftHalfArr[i].rec <= *(int *)rightHalfArr[j].rec) {
+        if (leftHalfArr[i].key <= rightHalfArr[j].key) {
             input[k] = leftHalfArr[i];
             i++;
         }
@@ -119,11 +133,16 @@ void mergeSort(records *input, int start, int end) {
  */
 void mergeHelper(void *args) {
     threadArgs *dummy = (threadArgs*) args;
-    int mid = dummy->start + (dummy->end - dummy->start) / 2;
-    if(dummy->start < dummy->end){
-        mergeSort(dummy->input, dummy->start, mid);
-        mergeSort(dummy->input, mid + 1, dummy->end);
-        merge(dummy->input, dummy->start, mid, dummy->end);
+    int thread = id++;
+    int start = thread * (dummy->entries / dummy->threads);
+    int end = (thread + 1) * (dummy->entries / dummy->threads) - 1;
+    if(thread == dummy->threads - 1)
+        end = dummy->entries - 1;
+    int mid = start + (end - start) / 2;
+    if (start < end) {
+        mergeSort(dummy->input,start, mid);
+        mergeSort(dummy->input,mid + 1, end);
+        merge(dummy->input,start, mid, end);
     }
 }
 
@@ -167,7 +186,7 @@ int main(int argc, char *argv[]) {
 
     struct stat inputFileStats;
     fstat(inputFD, &inputFileStats);
-    const int entries = inputFileStats.st_size / RECORD_SIZE;
+    const uint entries = inputFileStats.st_size / RECORD_SIZE;
     #if debug
         printf("Number of entries in the input file: %d\n", entries);
     #endif
@@ -176,8 +195,15 @@ int main(int argc, char *argv[]) {
     close(inputFD);
 
     records *duplicateRecords = (records *)malloc(entries * sizeof(records));
-    for(int i = 0; i < entries; i++) {
-        duplicateRecords[i].rec = inputRecords + (i * RECORD_SIZE);
+
+    /*
+        Inspired from rcheck.c
+    */
+    records *c = duplicateRecords;
+    for (char *r = inputRecords; r < inputRecords + entries * 100; r += 100) {
+        c->key = *(int *)r;
+        c->rec = r;
+        c++;
     }
 
     char *outputFile = argv[2];
@@ -195,28 +221,37 @@ int main(int argc, char *argv[]) {
 
     threadArgs arguments;
     pthread_t threads[numOfThreads];
+    threadData* threadList = (threadData*)malloc(sizeof(threadData) * numOfThreads);
     int mid = entries / numOfThreads;
 
     clock_t startTime, endTime;
 
+    pthread_mutex_init(&lock, NULL);
+
     startTime = clock();
-    for(int i = 0; i < numOfThreads; i++) {
-        arguments.start = i * mid;
-        arguments.end = arguments.start + mid - 1;
+    arguments.threads = numOfThreads;
+    arguments.entries = entries;
+    for(uint i = 0; i < numOfThreads; i++) {
+        threadList[i].start = i * mid;
+        threadList[i].end = threadList[i].start + mid - 1;
+
+        if(i == numOfThreads - 1)
+            threadList[i].end = entries - 1;
+
         arguments.input = duplicateRecords;
         pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);
     }
 
-    for(int i = 0; i < numOfThreads; i++) {
+    for(uint i = 0; i < numOfThreads; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    for(int i = 0; i < numOfThreads - 1; i++) {
-        mergeSort(duplicateRecords, 0,  entries - 1);
+    for(uint i = 1; i < numOfThreads; i++) {
+        merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
     endTime = clock();
 
-    for(int i = 0; i < entries; i++) {
+    for(uint i = 0; i < entries; i++) {
         if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
             #if debug
                 printf("Write to output file failed\n");
