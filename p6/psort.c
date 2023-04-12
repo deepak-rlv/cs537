@@ -236,14 +236,16 @@ int main(int argc, char *argv[]) {
 
     pthread_mutex_init(&lock, NULL);
 
-    double time = timeNow();
+    double startTime = timeNow();
     arguments.threads = numOfThreads;
     arguments.entries = entries;
+    
     for(uint i = 0; i < numOfThreads; i++) {
         threadList[i].start = i * mid;
-        threadList[i].end = threadList[i].start + mid - 1;
-
-        if(i == numOfThreads - 1)
+        
+        if(i != numOfThreads - 1)
+            threadList[i].end = threadList[i].start + mid - 1;
+        else
             threadList[i].end = entries - 1;
 
         arguments.input = duplicateRecords;
@@ -258,7 +260,7 @@ int main(int argc, char *argv[]) {
         merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
     
-    printf("Time taken: %lf\n", (timeNow() - time));
+    printf("Time taken: %lf\n", (timeNow() - startTime));
 
     for(uint i = 0; i < entries; i++) {
         if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
@@ -267,7 +269,6 @@ int main(int argc, char *argv[]) {
             #endif
         }
     }
-
 
     munmap((void *)inputRecords, inputFileStats.st_size);
     fflush(NULL);
