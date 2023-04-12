@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
     #if debug
         printf("Output File: %s\n", outputFile);
     #endif
-    
+
     int outputFD;
     if((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
         #if debug
@@ -257,6 +257,7 @@ int main(int argc, char *argv[]) {
     for(uint i = 1; i < numOfThreads; i++) {
         merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
+    
     printf("Time taken: %lf\n", (timeNow() - time));
 
     for(uint i = 0; i < entries; i++) {
