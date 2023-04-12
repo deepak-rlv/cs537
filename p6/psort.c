@@ -65,7 +65,6 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
  * @param end end index of the records to merge
  */
 void merge(records *input, int start, int mid, int end) {
-    pthread_mutex_lock(&lock);
     int i, j, k;
     int leftHalfElements = mid - start + 1;
     int rightHalfElements = end - mid;
@@ -107,7 +106,6 @@ void merge(records *input, int start, int mid, int end) {
     }
     free (leftHalfArr);
     free (rightHalfArr);
-    pthread_mutex_unlock(&lock);
 }
 
 /**
@@ -134,6 +132,7 @@ void mergeSort(records *input, int start, int end) {
  * @param args input argument for each thread
  */
 void mergeHelper(void *args) {
+    pthread_mutex_lock(&lock);
     threadArgs *dummy = (threadArgs*) args;
     int thread = id++;
     int start = thread * (dummy->entries / dummy->threads);
@@ -146,6 +145,7 @@ void mergeHelper(void *args) {
         mergeSort(dummy->input,mid + 1, end);
         merge(dummy->input,start, mid, end);
     }
+    pthread_mutex_unlock(&lock);
 }
 
 int main(int argc, char *argv[]) {
