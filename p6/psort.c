@@ -54,6 +54,12 @@ typedef struct {
 
 int id = 0;
 
+double timeNow() {
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME, &now);
+    return now.tv_sec + now.tv_nsec * 1e-9;
+}
+
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 /**
@@ -132,20 +138,21 @@ void mergeSort(records *input, int start, int end) {
  * @param args input argument for each thread
  */
 void mergeHelper(void *args) {
-    pthread_mutex_lock(&lock);
     threadArgs *dummy = (threadArgs*) args;
+    pthread_mutex_lock(&lock);
     int thread = id++;
+    pthread_mutex_unlock(&lock);
     int start = thread * (dummy->entries / dummy->threads);
     int end = (thread + 1) * (dummy->entries / dummy->threads) - 1;
     if(thread == dummy->threads - 1)
         end = dummy->entries - 1;
-    int mid = start + (end - start) / 2;
-    if (start < end) {
-        mergeSort(dummy->input,start, mid);
-        mergeSort(dummy->input,mid + 1, end);
-        merge(dummy->input,start, mid, end);
-    }
-    pthread_mutex_unlock(&lock);
+    mergeSort(dummy->input, start, end);
+    // int mid = start + (end - start) / 2;
+    // if (start < end) {
+    //     mergeSort(dummy->input,start, mid);
+    //     mergeSort(dummy->input,mid + 1, end);
+    //     merge(dummy->input,start, mid, end);
+    // }
 }
 
 int main(int argc, char *argv[]) {
@@ -226,11 +233,10 @@ int main(int argc, char *argv[]) {
     threadData* threadList = (threadData*)malloc(sizeof(threadData) * numOfThreads);
     int mid = entries / numOfThreads;
 
-    clock_t startTime, endTime;
 
     pthread_mutex_init(&lock, NULL);
 
-    startTime = clock();
+    double time = timeNow();
     arguments.threads = numOfThreads;
     arguments.entries = entries;
     for(uint i = 0; i < numOfThreads; i++) {
@@ -251,7 +257,7 @@ int main(int argc, char *argv[]) {
     for(uint i = 1; i < numOfThreads; i++) {
         merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
-    endTime = clock();
+    printf("Time taken: %lf\n", (timeNow() - time));
 
     for(uint i = 0; i < entries; i++) {
         if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
@@ -261,7 +267,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    printf("Time taken: %lf\n", (endTime - startTime) / (double)CLOCKS_PER_SEC);
 
     munmap((void *)inputRecords, inputFileStats.st_size);
     fflush(NULL);
