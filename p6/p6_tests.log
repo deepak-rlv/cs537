@@ -1,0 +1,24 @@
+Wed Apr 12 01:50:03 PM CDT 2023
+rm -rf psort
+gcc psort.c -Wall -Werror -pthread -O -o psort
+10+0 records in
+10+0 records out
+10000000 bytes (10 MB, 9.5 MiB) copied, 0.031437 s, 318 MB/s
+Test 1
+Time taken: 0.026418
+Time taken: 0.023602
+Time taken: 0.012175
+Time taken: 0.048722
+Time taken: 0.049926
+Time taken: 0.019430
+Time taken: 0.052800
+Time taken: 0.017367
+100+0 records in
+100+0 records out
+100000000 bytes (100 MB, 95 MiB) copied, 0.221213 s, 452 MB/s
+Test 2
+Time taken: 0.121127
+Time taken: 0.141896
+Time taken: 0.157182
+Time taken: 0.167832
+Time taken: 0.199405
