@@ -9,8 +9,8 @@
  */
 
 /*
-Ref: https://www.prowaretech.com/articles/current/c-plus-plus/algorithms/merge-sort-parallel#!
-Ref: https://www.geeksforgeeks.org/merge-sort-using-multi-threading/
+    Ref: https://www.prowaretech.com/articles/current/c-plus-plus/algorithms/merge-sort-parallel#!
+    Ref: https://www.geeksforgeeks.org/merge-sort-using-multi-threading/
 */
 
 /*
@@ -36,35 +36,55 @@ Ref: https://www.geeksforgeeks.org/merge-sort-using-multi-threading/
 #include <sys/stat.h>
 #include <sys/mman.h>
 
+/*
+    Structure to hold the key and the pointer to a record in the file
+*/
 typedef struct{
     int key;
     char *rec;
 } records;
 
+/*
+    Structure to hold the arguments to be sent to a child thread
+*/
 typedef struct {
     records *input;
     int threads;
     uint entries;
 } threadArgs;
 
+/*
+    Structure to hold the start and end indexes that each thread deals with
+*/
 typedef struct {
     int start;
     int end;
 } threadData;
 
-int id = 0;
+/*
+    Global variable to hold the thread IDs
+*/
+int threadID = 0;
 
+/*
+    Global variable for mutex lock
+*/
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+
+/**
+ * @brief Function to return a timestamp in seconds at the calling instant
+ * 
+ * @return double 
+ */
 double timeNow() {
     struct timespec now;
     clock_gettime(CLOCK_REALTIME, &now);
     return now.tv_sec + now.tv_nsec * 1e-9;
 }
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 /**
  * @brief Function to merge lists based on input indexes
- * 
+ *
  * @param input pointer to struct records that holds pointer to the actual records read
  * @param start starting index of the records to merge
  * @param mid middle index of the records to merge
@@ -116,7 +136,7 @@ void merge(records *input, int start, int mid, int end) {
 
 /**
  * @brief Function to recursively split the list and merge
- * 
+ *
  * @param input pointer to struct records that holds pointer to the actual records read
  * @param start starting index of the records to merge
  * @param end end index of the records to merge
@@ -134,25 +154,25 @@ void mergeSort(records *input, int start, int end) {
 
 /**
  * @brief Function to extract the arguments from the thread structure
- * 
+ *
  * @param args input argument for each thread
  */
 void mergeHelper(void *args) {
     threadArgs *dummy = (threadArgs*) args;
+
+    /*
+        Locking, because threadID is shared global variable
+    */
     pthread_mutex_lock(&lock);
-    int thread = id++;
+    int thread = threadID++;
     pthread_mutex_unlock(&lock);
+
     int start = thread * (dummy->entries / dummy->threads);
     int end = (thread + 1) * (dummy->entries / dummy->threads) - 1;
     if(thread == dummy->threads - 1)
         end = dummy->entries - 1;
+
     mergeSort(dummy->input, start, end);
-    // int mid = start + (end - start) / 2;
-    // if (start < end) {
-    //     mergeSort(dummy->input,start, mid);
-    //     mergeSort(dummy->input,mid + 1, end);
-    //     merge(dummy->input,start, mid, end);
-    // }
 }
 
 int main(int argc, char *argv[]) {
@@ -163,7 +183,7 @@ int main(int argc, char *argv[]) {
         "output\t\tThe output file where records will be written after sort\n"
         "numThreads\tNumber of threads that shall perform the sort operation\n");
 
-        return 0;
+        exit(EXIT_FAILURE);
     }
 
     /*
@@ -174,7 +194,7 @@ int main(int argc, char *argv[]) {
         #if debug
             printf("Number of threads cannot be less than 1\n");
         #endif
-        return 0;
+        exit(EXIT_FAILURE);
     }
     #if debug
         printf("Number of threads: %d\n", numOfThreads);
@@ -190,7 +210,7 @@ int main(int argc, char *argv[]) {
         #if debug
             printf("Input open failed\n");
         #endif
-        return 0;
+        exit(EXIT_FAILURE);
     }
 
     struct stat inputFileStats;
@@ -225,7 +245,7 @@ int main(int argc, char *argv[]) {
         #if debug
             printf("Output open failed\n");
         #endif
-        return 0;
+        exit(EXIT_FAILURE);
     }
 
     threadArgs arguments;
@@ -233,16 +253,14 @@ int main(int argc, char *argv[]) {
     threadData* threadList = (threadData*)malloc(sizeof(threadData) * numOfThreads);
     int mid = entries / numOfThreads;
 
-
     pthread_mutex_init(&lock, NULL);
 
     double startTime = timeNow();
     arguments.threads = numOfThreads;
     arguments.entries = entries;
-    
+
     for(uint i = 0; i < numOfThreads; i++) {
         threadList[i].start = i * mid;
-        
         if(i != numOfThreads - 1)
             threadList[i].end = threadList[i].start + mid - 1;
         else
@@ -259,18 +277,25 @@ int main(int argc, char *argv[]) {
     for(uint i = 1; i < numOfThreads; i++) {
         merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
-    
-    printf("Time taken: %lf\n", (timeNow() - startTime));
+
+    printf("Time taken: %lfs\n", (timeNow() - startTime));
 
     for(uint i = 0; i < entries; i++) {
         if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
             #if debug
                 printf("Write to output file failed\n");
             #endif
+            exit(EXIT_FAILURE);
         }
     }
 
-    munmap((void *)inputRecords, inputFileStats.st_size);
+    if(munmap((void *)inputRecords, inputFileStats.st_size) == -1){
+        #if debug
+            printf("MMAP unmapping failed\n");
+        #endif
+        exit(EXIT_FAILURE);
+    }
+
     fflush(NULL);
     close(outputFD);
 
