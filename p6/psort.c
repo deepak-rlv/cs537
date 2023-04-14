@@ -39,7 +39,7 @@
 /*
     Structure to hold the key and the pointer to a record in the file
 */
-typedef struct{
+typedef struct {
     int key;
     char *rec;
 } records;
@@ -111,8 +111,7 @@ void merge(records *input, int start, int mid, int end) {
         if (leftHalfArr[i].key <= rightHalfArr[j].key) {
             input[k] = leftHalfArr[i];
             i++;
-        }
-        else {
+        } else {
             input[k] = rightHalfArr[j];
             j++;
         }
@@ -130,8 +129,8 @@ void merge(records *input, int start, int mid, int end) {
         j++;
         k++;
     }
-    free (leftHalfArr);
-    free (rightHalfArr);
+    free(leftHalfArr);
+    free(rightHalfArr);
 }
 
 /**
@@ -169,14 +168,14 @@ void mergeHelper(void *args) {
 
     int start = thread * (dummy->entries / dummy->threads);
     int end = (thread + 1) * (dummy->entries / dummy->threads) - 1;
-    if(thread == dummy->threads - 1)
+    if (thread == dummy->threads - 1)
         end = dummy->entries - 1;
 
     mergeSort(dummy->input, start, end);
 }
 
 int main(int argc, char *argv[]) {
-    if(argc - 1 != ARGUMENTS){
+    if (argc - 1 != ARGUMENTS){
         printf("!!! Not enough arguments !!!\n\n"
         "Usage: ./psort input output 4\n"
         "input\t\tThe input file to read records for sort\n"
@@ -190,7 +189,7 @@ int main(int argc, char *argv[]) {
         The number of threads for a process cannot be less than 1
     */
     int numOfThreads = atoi(argv[3]);
-    if(numOfThreads < MIN_THREADS) {
+    if (numOfThreads < MIN_THREADS) {
         #if debug
             printf("Number of threads cannot be less than 1\n");
         #endif
@@ -206,7 +205,7 @@ int main(int argc, char *argv[]) {
     #endif
 
     int inputFD;
-    if((inputFD = open(inputFile, O_RDWR)) == -1) {
+    if ((inputFD = open(inputFile, O_RDWR)) == -1) {
         #if debug
             printf("Input open failed\n");
         #endif
@@ -241,7 +240,7 @@ int main(int argc, char *argv[]) {
     #endif
 
     int outputFD;
-    if((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
+    if ((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
         #if debug
             printf("Output open failed\n");
         #endif
