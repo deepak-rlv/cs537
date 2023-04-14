@@ -175,7 +175,7 @@ void mergeHelper(void *args) {
 }
 
 int main(int argc, char *argv[]) {
-    if (argc - 1 != ARGUMENTS){
+    if (argc - 1 != ARGUMENTS) {
         printf("!!! Not enough arguments !!!\n\n"
         "Usage: ./psort input output 4\n"
         "input\t\tThe input file to read records for sort\n"
@@ -254,13 +254,14 @@ int main(int argc, char *argv[]) {
 
     pthread_mutex_init(&lock, NULL);
 
-    double startTime = timeNow();
+    double startTime;
     arguments.threads = numOfThreads;
     arguments.entries = entries;
 
-    for(uint i = 0; i < numOfThreads; i++) {
+    startTime = timeNow();
+    for (uint i = 0; i < numOfThreads; i++) {
         threadList[i].start = i * mid;
-        if(i != numOfThreads - 1)
+        if (i != numOfThreads - 1)
             threadList[i].end = threadList[i].start + mid - 1;
         else
             threadList[i].end = entries - 1;
@@ -269,18 +270,18 @@ int main(int argc, char *argv[]) {
         pthread_create(&threads[i], NULL, (void *)mergeHelper, (void *)&arguments);
     }
 
-    for(uint i = 0; i < numOfThreads; i++) {
+    for (uint i = 0; i < numOfThreads; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    for(uint i = 1; i < numOfThreads; i++) {
+    for (uint i = 1; i < numOfThreads; i++) {
         merge(duplicateRecords, threadList[0].start, threadList[i].start - 1, threadList[i].end);
     }
 
     printf("Time taken: %lfs\n", (timeNow() - startTime));
 
-    for(uint i = 0; i < entries; i++) {
-        if(write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
+    for (uint i = 0; i < entries; i++) {
+        if (write(outputFD, (void *)duplicateRecords[i].rec, RECORD_SIZE) == -1) {
             #if debug
                 printf("Write to output file failed\n");
             #endif
@@ -288,7 +289,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if(munmap((void *)inputRecords, inputFileStats.st_size) == -1){
+    if (munmap((void *)inputRecords, inputFileStats.st_size) == -1) {
         #if debug
             printf("MMAP unmapping failed\n");
         #endif
