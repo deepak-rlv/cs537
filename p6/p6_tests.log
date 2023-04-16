@@ -1,24 +1,51 @@
-Wed Apr 12 01:50:03 PM CDT 2023
+Fri Apr 14 01:14:28 AM CDT 2023
 rm -rf psort
 gcc psort.c -Wall -Werror -pthread -O -o psort
 10+0 records in
 10+0 records out
-10000000 bytes (10 MB, 9.5 MiB) copied, 0.031437 s, 318 MB/s
+10000000 bytes (10 MB, 9.5 MiB) copied, 0.0229133 s, 436 MB/s
 Test 1
-Time taken: 0.026418
-Time taken: 0.023602
-Time taken: 0.012175
-Time taken: 0.048722
-Time taken: 0.049926
-Time taken: 0.019430
-Time taken: 0.052800
-Time taken: 0.017367
+Time taken: 0.005607s
+Time taken: 0.004335s
+Time taken: 0.004373s
+Time taken: 0.004132s
+Time taken: 0.004144s
+Time taken: 0.004856s
+Time taken: 0.005009s
+Time taken: 0.005743s
 100+0 records in
 100+0 records out
-100000000 bytes (100 MB, 95 MiB) copied, 0.221213 s, 452 MB/s
+100000000 bytes (100 MB, 95 MiB) copied, 0.211717 s, 472 MB/s
 Test 2
-Time taken: 0.121127
-Time taken: 0.141896
-Time taken: 0.157182
-Time taken: 0.167832
-Time taken: 0.199405
+Time taken: 0.063584s
+Time taken: 0.045861s
+Time taken: 0.043793s
+Time taken: 0.046408s
+Time taken: 0.049371s
+Time taken: 0.055069s
+Time taken: 0.063041s
+Time taken: 0.068025s
+1000+0 records in
+1000+0 records out
+1000000000 bytes (1.0 GB, 954 MiB) copied, 2.10928 s, 474 MB/s
+Test 3
+Time taken: 0.779200s
+Time taken: 0.666830s
+Time taken: 0.563116s
+Time taken: 0.589572s
+Time taken: 0.641743s
+Time taken: 0.716461s
+Time taken: 0.734699s
+Time taken: 0.819996s
+4000+0 records in
+4000+0 records out
+4000000000 bytes (4.0 GB, 3.7 GiB) copied, 8.63868 s, 463 MB/s
+Test 4
+Time taken: 3.621263s
+Time taken: 3.005333s
+Time taken: 2.688685s
+Time taken: 2.928419s
+Time taken: 2.961753s
+Time taken: 3.278374s
+Time taken: 3.482164s
+Time taken: 3.738604s

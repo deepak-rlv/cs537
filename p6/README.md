@@ -1,4 +1,4 @@
-# **Project 5**
+# **Project 6**
 
 ## **Parallel Sort Algorithm**
 
