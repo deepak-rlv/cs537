@@ -9,6 +9,7 @@ default: main
 
 clean:
 	rm -f $(EXEC)
+	rm -f output/*
 
-main: $(MAIN.C)
+main: $(MAIN.C) clean
 	$(CC) $(CFLAGS) $(DFLAGS) $(MAIN.C) $(DEPENDENCIES.C) -o $(EXEC)
