@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror
+CFLAGS = -Wall -Wextra 
 DFLAGS = -g
 DEPENDENCIES.C = read_ext2.c
 EXEC = runscan
@@ -9,7 +9,7 @@ default: main
 
 clean:
 	rm -f $(EXEC)
-	rm -f output/*
+	rm -rf output
 
 main: $(MAIN.C) clean
 	$(CC) $(CFLAGS) $(DFLAGS) $(MAIN.C) $(DEPENDENCIES.C) -o $(EXEC)

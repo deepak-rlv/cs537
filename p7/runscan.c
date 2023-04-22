@@ -7,11 +7,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <stdbool.h>
+#include <errno.h>
 
-int main(int argc, char **argv) 
-{
-    if (argc != 3) 
-    {
+int main(int argc, char **argv) {
+    if (argc != 3) {
         printf("expected usage: ./runscan inputfile outputfile\n");
         exit(0);
     }
@@ -21,6 +20,14 @@ int main(int argc, char **argv)
 
     int fd;
     fd = open(argv[1], O_RDONLY);    /* open disk image */
+
+    int dirFD = mkdir (argv[2], 0777);
+    if (dirFD == -1) {
+        if (errno == EEXIST) {
+            printf("Directory %s alread exists\n", argv[2]);
+            exit(EXIT_FAILURE);
+        }
+    }
 
     ext2_read_init(fd);
 
@@ -38,13 +45,42 @@ int main(int argc, char **argv)
     printf("Inode Table %ld\n", locate_inode_table(0, &group));
     printf("Data Blocks %ld\n", locate_data_blocks(0, &group));
 
-    for(; inode_no < super.s_inodes_per_group; inode_no++){
-        read_inode(fd, 124*1024, inode_no, &inode);
-        if (S_ISDIR(inode.i_mode)) {
-            printf("directory\n");
-        }
-        else if (S_ISREG(inode.i_mode)) {
-            printf("regular file %d\n",inode_no);
+    for (; inode_no < super.s_inodes_per_group; inode_no++) {
+        read_inode(fd, 124*1024, inode_no, &inode, 256);
+        if (S_ISDIR (inode.i_mode)) {
+            // printf("directory\n");
+            char directoryDBlock[1024];
+
+            for (unsigned int j = 0; inode.i_block[j] != 0 && j < 15; j++) {
+                lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
+                read(fd, directoryDBlock, sizeof(directoryDBlock));
+
+                struct ext2_dir_entry *dentry;
+                unsigned int recordLength;
+
+                for (unsigned int i = 0; i < 1024; i += recordLength) {
+                    dentry = (struct ext2_dir_entry*) & (directoryDBlock[i]);
+
+                    if (dentry->inode == 0) {
+                        break;
+                    }
+
+                    const int name_len = dentry->name_len & 0xFF; // convert 2 bytes to 4 bytes properly
+                    if (name_len >= EXT2_NAME_LEN) {
+                        printf("Entry name length greater than 255.\n");
+                        exit(EXIT_FAILURE);
+                    }
+                    
+                    char name [name_len + 1];
+                    strncpy(name, dentry->name, name_len);
+                    name[name_len] = '\0';
+
+                    printf("Entry name is -- %s -- %d --\n", name, dentry->inode);
+                    recordLength = ((name_len % 4)? ((name_len / 4) + 1) * 4: name_len) + 8;
+                }
+            }
+        } else if (S_ISREG(inode.i_mode)) {
+            // printf("regular file %d\n", inode_no);
             char buffer[1024];
             lseek(fd, inode.i_block[0]*1024, SEEK_SET);
             read(fd, buffer, sizeof(buffer));
@@ -59,9 +95,8 @@ int main(int argc, char **argv)
                 isJPG = 1;
             }
             
-            if(isJPG){
-                printf("JPEG\n");
-
+            if (isJPG) {
+                // printf("JPEG\n");
                 char inodeString[10];
                 snprintf(inodeString, sizeof(inodeString), "%d", inode_no);
                 char *outputFile = malloc((strlen(argv[2])+strlen(inodeString)+1+strlen("/file-")) * sizeof(char));
@@ -78,23 +113,23 @@ int main(int argc, char **argv)
                     exit(EXIT_FAILURE);
                 }
                 unsigned int fileSize = inode.i_size;
-                for(unsigned int j = 0; inode.i_block[j] != 0 && j < 15; j++) {
+                for (unsigned int j = 0; inode.i_block[j] != 0 && j < 15; j++) {
                     unsigned int loopIter;
 
-                    if(j == 12) {
+                    if (j == 12) {
                         int indirectBuffer1_p[256];
                         
                         lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
                         read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
 
-                        for(unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i ++) {
+                        for (unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i++) {
                             char indirectBuffer1_d[1024];
                             loopIter = (fileSize > 1024)? 1024 : fileSize;
 
                             lseek(fd, indirectBuffer1_p[i] * 1024, SEEK_SET);
                             read(fd, indirectBuffer1_d, sizeof(indirectBuffer1_d));
 
-                            for(unsigned int k = 0; k < loopIter; k++) {
+                            for (unsigned int k = 0; k < loopIter; k++) {
                                 if (write(outputFD, (void *)&indirectBuffer1_d[k], sizeof(char)) == -1) {
                                     #if debug
                                         printf("Write to output file failed\n");
@@ -104,26 +139,26 @@ int main(int argc, char **argv)
                             }
                             fileSize -= loopIter;
                         }
-                    } else if(j == 13) {
+                    } else if (j == 13) {
                         int indirectBuffer1_p[256];
                         
                         lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
                         read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
 
-                        for(unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i ++) {
+                        for (unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i ++) {
                             int indirectBuffer2_p[256];
 
                             lseek(fd, indirectBuffer1_p[i] * 1024, SEEK_SET);
                             read(fd, indirectBuffer2_p, sizeof(indirectBuffer2_p));
 
-                            for(unsigned int k = 0; k < 256 && indirectBuffer2_p[k] != 0; k ++) {
+                            for (unsigned int k = 0; k < 256 && indirectBuffer2_p[k] != 0; k ++) {
                                 char indirectBuffer2_d[1024];
                                 loopIter = (fileSize > 1024)? 1024 : fileSize;
 
                                 lseek(fd, indirectBuffer2_p[k] * 1024, SEEK_SET);
                                 read(fd, indirectBuffer2_d, sizeof(indirectBuffer2_d));
 
-                                for(unsigned int h = 0; h < loopIter; h++) {
+                                for (unsigned int h = 0; h < loopIter; h++) {
                                     if (write(outputFD, (void *)&indirectBuffer2_d[h], sizeof(char)) == -1) {
                                         #if debug
                                             printf("Write to output file failed\n");
@@ -140,7 +175,7 @@ int main(int argc, char **argv)
                         lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
                         read(fd, buffer, sizeof(buffer));
 
-                        for(unsigned int i = 0; i < loopIter; i++) {
+                        for (unsigned int i = 0; i < loopIter; i++) {
                             if (write(outputFD, (void *)&buffer[i], sizeof(char)) == -1) {
                                 #if debug
                                     printf("Write to output file failed\n");
@@ -153,10 +188,6 @@ int main(int argc, char **argv)
                 }
             }
         }
-        else {
-            // printf("other file\n");
-        }
     }
-
     return 0;
 }
