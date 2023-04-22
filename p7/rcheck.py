@@ -24,7 +24,7 @@ if __name__ == "__main__":
     exp_dir_files = get_files(exp_dir)
 
     # does the output dir contain the same list of files
-    if out_dir_files.casefold() == exp_dir_files.casefold():
+    if [x.casefold() for x in out_dir_files] == [x.casefold() for x in exp_dir_files]:
         print('file list matched, comparing...')
         #compare each individual file
         for i in range(len(exp_dir_files)):

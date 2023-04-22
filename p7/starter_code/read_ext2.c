@@ -208,5 +208,5 @@ off_t locate_data_blocks( int ngroup, const struct ext2_group_desc *group      /
 void read_inode(int fd, off_t offset, int inode_no, struct ext2_inode *inode, __u16 s_inode_size)
 {
         lseek(fd, offset + (inode_no-1)*s_inode_size, SEEK_SET);
-        read(fd, inode, s_inode_size);
+        read(fd, inode, sizeof(struct ext2_inode));
 }
