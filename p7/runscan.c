@@ -41,6 +41,8 @@ int main(int argc, char **argv) {
     read_group_desc(fd, 0, &group);
 
     unsigned int inode_no = 0;
+    // unsigned int topSecretInode = 0;
+    // bool topSecretFolderLocated = 0;
 
     printf("Inode Table %ld\n", locate_inode_table(0, &group));
     printf("Data Blocks %ld\n", locate_data_blocks(0, &group));
@@ -76,6 +78,11 @@ int main(int argc, char **argv) {
                     name[name_len] = '\0';
 
                     printf("Entry name is -- %s -- %d --\n", name, dentry->inode);
+
+                    // if (strcmp("top_secret", name) == 0) {
+                    //     topSecretInode = dentry->inode;
+                    // }
+
                     recordLength = ((name_len % 4)? ((name_len / 4) + 1) * 4: name_len) + 8;
                 }
             }
