@@ -41,26 +41,30 @@ int main(int argc, char **argv) {
     read_group_desc(fd, 0, &group);
 
     unsigned int inode_no = 0;
-    // unsigned int topSecretInode = 0;
-    // bool topSecretFolderLocated = 0;
+    unsigned int topSecretInode = 0;
+    bool topSecretFolderLocated = 0;
 
     printf("Inode Table %ld\n", locate_inode_table(0, &group));
     printf("Data Blocks %ld\n", locate_data_blocks(0, &group));
 
     for (; inode_no < super.s_inodes_per_group; inode_no++) {
-        read_inode(fd, 124*1024, inode_no, &inode, 256);
+        read_inode(fd, group.bg_inode_table * BASE_OFFSET, inode_no, &inode, 256);
         if (S_ISDIR (inode.i_mode)) {
             // printf("directory\n");
-            char directoryDBlock[1024];
+            char directoryDBlock[BASE_OFFSET];
 
             for (unsigned int j = 0; inode.i_block[j] != 0 && j < 15; j++) {
-                lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
+                lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
                 read(fd, directoryDBlock, sizeof(directoryDBlock));
 
                 struct ext2_dir_entry *dentry;
                 unsigned int recordLength;
 
-                for (unsigned int i = 0; i < 1024; i += recordLength) {
+                if (topSecretInode == inode_no) {
+                    topSecretFolderLocated = 1;
+                }
+
+                for (unsigned int i = 0; i < BASE_OFFSET; i += recordLength) {
                     dentry = (struct ext2_dir_entry*) & (directoryDBlock[i]);
 
                     if (dentry->inode == 0) {
@@ -79,17 +83,17 @@ int main(int argc, char **argv) {
 
                     printf("Entry name is -- %s -- %d --\n", name, dentry->inode);
 
-                    // if (strcmp("top_secret", name) == 0) {
-                    //     topSecretInode = dentry->inode;
-                    // }
+                    if (strcmp("top_secret", name) == 0) {
+                        topSecretInode = dentry->inode;
+                    }
 
                     recordLength = ((name_len % 4)? ((name_len / 4) + 1) * 4: name_len) + 8;
                 }
             }
-        } else if (S_ISREG(inode.i_mode)) {
+        } else if (S_ISREG(inode.i_mode) && topSecretFolderLocated) {
             // printf("regular file %d\n", inode_no);
-            char buffer[1024];
-            lseek(fd, inode.i_block[0]*1024, SEEK_SET);
+            char buffer[BASE_OFFSET];
+            lseek(fd, inode.i_block[0]*BASE_OFFSET, SEEK_SET);
             read(fd, buffer, sizeof(buffer));
             bool isJPG = 0; 
 
@@ -120,20 +124,28 @@ int main(int argc, char **argv) {
                     exit(EXIT_FAILURE);
                 }
                 unsigned int fileSize = inode.i_size;
-                for (unsigned int j = 0; inode.i_block[j] != 0 && j < 15; j++) {
+                for (unsigned int j = 0; /* inode.i_block[j] != 0 && */ j < 15; j++) {
+                    if (inode.i_block[j] == 0) {
+                        continue;
+                    }
+
                     unsigned int loopIter;
 
                     if (j == 12) {
                         int indirectBuffer1_p[256];
                         
-                        lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
+                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
                         read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
 
-                        for (unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i++) {
-                            char indirectBuffer1_d[1024];
-                            loopIter = (fileSize > 1024)? 1024 : fileSize;
+                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i++) {
+                            if (indirectBuffer1_p[i] == 0) {
+                                continue;
+                            }
 
-                            lseek(fd, indirectBuffer1_p[i] * 1024, SEEK_SET);
+                            char indirectBuffer1_d[BASE_OFFSET];
+                            loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
                             read(fd, indirectBuffer1_d, sizeof(indirectBuffer1_d));
 
                             for (unsigned int k = 0; k < loopIter; k++) {
@@ -149,20 +161,28 @@ int main(int argc, char **argv) {
                     } else if (j == 13) {
                         int indirectBuffer1_p[256];
                         
-                        lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
+                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
                         read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
 
-                        for (unsigned int i = 0; i < 256 && indirectBuffer1_p[i] != 0; i ++) {
+                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i ++) {
+                            if (indirectBuffer1_p[i] == 0) {
+                                continue;
+                            }
+
                             int indirectBuffer2_p[256];
 
-                            lseek(fd, indirectBuffer1_p[i] * 1024, SEEK_SET);
+                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
                             read(fd, indirectBuffer2_p, sizeof(indirectBuffer2_p));
 
-                            for (unsigned int k = 0; k < 256 && indirectBuffer2_p[k] != 0; k ++) {
-                                char indirectBuffer2_d[1024];
-                                loopIter = (fileSize > 1024)? 1024 : fileSize;
+                            for (unsigned int k = 0; k < 256 /* && indirectBuffer2_p[k] != 0 */; k ++) {
+                                if (indirectBuffer2_p[i] == 0) {
+                                    continue;
+                                }
 
-                                lseek(fd, indirectBuffer2_p[k] * 1024, SEEK_SET);
+                                char indirectBuffer2_d[BASE_OFFSET];
+                                loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                                lseek(fd, indirectBuffer2_p[k] * BASE_OFFSET, SEEK_SET);
                                 read(fd, indirectBuffer2_d, sizeof(indirectBuffer2_d));
 
                                 for (unsigned int h = 0; h < loopIter; h++) {
@@ -177,9 +197,9 @@ int main(int argc, char **argv) {
                             }
                         }
                     } else {
-                        loopIter = (fileSize > 1024)? 1024 : fileSize;
+                        loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
 
-                        lseek(fd, inode.i_block[j] * 1024, SEEK_SET);
+                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
                         read(fd, buffer, sizeof(buffer));
 
                         for (unsigned int i = 0; i < loopIter; i++) {
