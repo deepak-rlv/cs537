@@ -8,7 +8,7 @@
 #include "ext2_fs.h"
 
 #define BASE_OFFSET 1024                   /* locates beginning of the super block (first group) */
-#define BLOCK_OFFSET(block) (BASE_OFFSET + (block-1)*block_size)
+#define BLOCK_OFFSET(block) (block*block_size)
 
 extern unsigned int block_size;		       /* default 1kB block size */
 extern unsigned int inodes_per_block;	   /* number of inodes per block */
@@ -29,7 +29,7 @@ int read_super_block( int                      fd,        /* the disk image file
 					  );
 
 /* Read the group-descriptor in the specified block group */
-void read_group_desc( int                      fd,        /* the disk image file descriptor */
+int read_group_desc( int                      fd,        /* the disk image file descriptor */
 					  int                      ngroup,    /* which block group to access */
 					  struct ext2_group_desc  *group      /* where to put the group-descriptor */
 					  );
@@ -46,8 +46,8 @@ off_t locate_data_blocks(int                           ngroup,      /* which blo
 void read_inode( int                           fd,        /* the disk image file descriptor */
 				 off_t 						   offset,    /* offset to the start of the inode table */
 				 int                           inode_no,  /* the inode number to read  */
-		 struct ext2_inode            *inode      /* where to put the inode */,
-		 __u16 s_inode_size
+				 struct ext2_inode            *inode,      /* where to put the inode */
+				 __u16						   s_inode_size
 				 ); 
 
 #endif

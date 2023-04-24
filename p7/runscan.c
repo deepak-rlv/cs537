@@ -11,7 +11,7 @@
 
 int main(int argc, char **argv) {
     if (argc != 3) {
-        printf("expected usage: ./runscan inputfile outputfile\n");
+        printf("expected usage: ./runscan inputfile outputfile1\n");
         exit(0);
     }
 
@@ -88,129 +88,341 @@ int main(int argc, char **argv) {
                     }
 
                     recordLength = ((name_len % 4)? ((name_len / 4) + 1) * 4: name_len) + 8;
-                }
-            }
-        } else if (S_ISREG(inode.i_mode) && topSecretFolderLocated) {
-            // printf("regular file %d\n", inode_no);
-            char buffer[BASE_OFFSET];
-            lseek(fd, inode.i_block[0]*BASE_OFFSET, SEEK_SET);
-            read(fd, buffer, sizeof(buffer));
-            bool isJPG = 0; 
 
-            if (buffer[0] == (char)0xff &&
-                buffer[1] == (char)0xd8 &&
-                buffer[2] == (char)0xff &&
-                (buffer[3] == (char)0xe0 ||
-                buffer[3] == (char)0xe1 ||
-                buffer[3] == (char)0xe8)) {
-                isJPG = 1;
-            }
-            
-            if (isJPG) {
-                // printf("JPEG\n");
-                char inodeString[10];
-                snprintf(inodeString, sizeof(inodeString), "%d", inode_no);
-                char *outputFile = malloc((strlen(argv[2])+strlen(inodeString)+1+strlen("/file-")) * sizeof(char));
-                strcat(outputFile, argv[2]);
-                strcat(outputFile, ("/file-"));
-                strcat(outputFile, inodeString);
-                strcat(outputFile, ".jpg");
+                    if (topSecretFolderLocated) {
+                        read_inode(fd, group.bg_inode_table * BASE_OFFSET, dentry->inode, &inode, 256);
+                        if (S_ISREG(inode.i_mode) && topSecretFolderLocated) {
+                            // printf("regular file %d\n", inode_no);
+                            char buffer[BASE_OFFSET];
+                            lseek(fd, inode.i_block[0] * BASE_OFFSET, SEEK_SET);
+                            read(fd, buffer, sizeof(buffer));
+                            bool isJPG = 0; 
 
-                int outputFD;
-                if ((outputFD = open(outputFile, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
-                    #if debug
-                        printf("Output open failed\n");
-                    #endif
-                    exit(EXIT_FAILURE);
-                }
-                unsigned int fileSize = inode.i_size;
-                for (unsigned int j = 0; /* inode.i_block[j] != 0 && */ j < 15; j++) {
-                    if (inode.i_block[j] == 0) {
-                        continue;
-                    }
-
-                    unsigned int loopIter;
-
-                    if (j == 12) {
-                        int indirectBuffer1_p[256];
-                        
-                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
-                        read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
-
-                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i++) {
-                            if (indirectBuffer1_p[i] == 0) {
-                                continue;
+                            if (buffer[0] == (char)0xff &&
+                                buffer[1] == (char)0xd8 &&
+                                buffer[2] == (char)0xff &&
+                                (buffer[3] == (char)0xe0 ||
+                                buffer[3] == (char)0xe1 ||
+                                buffer[3] == (char)0xe8)) {
+                                isJPG = 1;
                             }
-
-                            char indirectBuffer1_d[BASE_OFFSET];
-                            loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
-
-                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
-                            read(fd, indirectBuffer1_d, sizeof(indirectBuffer1_d));
-
-                            for (unsigned int k = 0; k < loopIter; k++) {
-                                if (write(outputFD, (void *)&indirectBuffer1_d[k], sizeof(char)) == -1) {
+                            
+                            if (isJPG) {
+                                // printf("JPEG\n");
+                                char inodeString[10];
+                                snprintf(inodeString, sizeof(inodeString), "%d", dentry->inode);
+                                char *outputFile1 = malloc((strlen(argv[2]) + strlen(inodeString) + 1 + strlen("/file-") + 4) * sizeof(char));
+                                strcat(outputFile1, argv[2]);
+                                strcat(outputFile1, ("/file-"));
+                                strcat(outputFile1, inodeString);
+                                strcat(outputFile1, ".jpg");
+                                strcat(outputFile1, "\0");
+                                int outputFD1;
+                                if ((outputFD1 = open(outputFile1, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
                                     #if debug
-                                        printf("Write to output file failed\n");
+                                        printf("Output2 open failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+
+                                char *outputFile2 = malloc((strlen(argv[2]) + strlen(name) + 1 + 1) * sizeof(char));
+                                strcat(outputFile2, argv[2]);
+                                strcat(outputFile2, "/");
+                                strcat(outputFile2, name);
+                                strcat(outputFile2, "\0");
+                                int outputFD2;
+                                if ((outputFD2 = open(outputFile2, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
+                                    #if debug
+                                        printf("Output2 open failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+
+                                char *outputFile3 = malloc((strlen(argv[2]) + strlen(inodeString) + 1 + strlen("/file-") + 4 + strlen("-details")) * sizeof(char));
+                                strcat(outputFile3, argv[2]);
+                                strcat(outputFile3, ("/file-"));
+                                strcat(outputFile3, inodeString);
+                                strcat(outputFile3, ("-details"));
+                                strcat(outputFile3, ".txt");
+                                strcat(outputFile3, "\0");
+
+                                int outputFD3;
+                                if ((outputFD3 = open(outputFile3, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
+                                    #if debug
+                                        printf("Output3 open failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+
+                                unsigned int fileSize = inode.i_size;
+                                for (unsigned int j = 0; /* inode.i_block[j] != 0 && */ j < 14; j++) {
+                                    /* if (inode.i_block[j] == 0) {
+                                        continue;
+                                    } */
+
+                                    unsigned int loopIter;
+
+                                    if (j == 12) {
+                                        int indirectBuffer1_p[256];
+                                        
+                                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                                        read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
+
+                                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i++) {
+                                            /* if (indirectBuffer1_p[i] == 0) {
+                                                continue;
+                                            } */
+
+                                            char indirectBuffer1_d[BASE_OFFSET];
+                                            loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
+                                            read(fd, indirectBuffer1_d, sizeof(indirectBuffer1_d));
+
+                                            for (unsigned int k = 0; k < loopIter; k++) {
+                                                if (write(outputFD1, (void *)&indirectBuffer1_d[k], sizeof(char)) == -1) {
+                                                    #if debug
+                                                        printf("Write to output1 file failed\n");
+                                                    #endif
+                                                    exit(EXIT_FAILURE);
+                                                }
+                                                if (write(outputFD2, (void *)&indirectBuffer1_d[k], sizeof(char)) == -1) {
+                                                    #if debug
+                                                        printf("Write to output2 file failed\n");
+                                                    #endif
+                                                    exit(EXIT_FAILURE);
+                                                }
+                                            }
+                                            fileSize -= loopIter;
+                                        }
+                                    } else if (j == 13) {
+                                        int indirectBuffer1_p[256];
+                                        
+                                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                                        read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
+
+                                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i ++) {
+                                            /* if (indirectBuffer1_p[i] == 0) {
+                                                continue;
+                                            } */
+
+                                            int indirectBuffer2_p[256];
+
+                                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
+                                            read(fd, indirectBuffer2_p, sizeof(indirectBuffer2_p));
+
+                                            for (unsigned int k = 0; k < 256 /* && indirectBuffer2_p[k] != 0 */; k ++) {
+                                                /* if (indirectBuffer2_p[i] == 0) {
+                                                    continue;
+                                                } */
+
+                                                char indirectBuffer2_d[BASE_OFFSET];
+                                                loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                                                lseek(fd, indirectBuffer2_p[k] * BASE_OFFSET, SEEK_SET);
+                                                read(fd, indirectBuffer2_d, sizeof(indirectBuffer2_d));
+
+                                                for (unsigned int h = 0; h < loopIter; h++) {
+                                                    if (write(outputFD1, (void *)&indirectBuffer2_d[h], sizeof(char)) == -1) {
+                                                        #if debug
+                                                            printf("Write to output1 file failed\n");
+                                                        #endif
+                                                        exit(EXIT_FAILURE);
+                                                    }
+                                                    if (write(outputFD2, (void *)&indirectBuffer2_d[h], sizeof(char)) == -1) {
+                                                        #if debug
+                                                            printf("Write to output2 file failed\n");
+                                                        #endif
+                                                        exit(EXIT_FAILURE);
+                                                    }
+                                                }
+                                                fileSize -= loopIter;
+                                            }
+                                        }
+                                    } else {
+                                        loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                                        read(fd, buffer, sizeof(buffer));
+
+                                        for (unsigned int i = 0; i < loopIter; i++) {
+                                            if (write(outputFD1, (void *)&buffer[i], sizeof(char)) == -1) {
+                                                #if debug
+                                                    printf("Write to output1 file failed\n");
+                                                #endif
+                                                exit(EXIT_FAILURE);
+                                            }
+                                            if (write(outputFD2, (void *)&buffer[i], sizeof(char)) == -1) {
+                                                #if debug
+                                                    printf("Write to output2 file failed\n");
+                                                #endif
+                                                exit(EXIT_FAILURE);
+                                            }
+                                        }
+                                        fileSize -= loopIter;
+                                    }
+                                }
+                                char linksCount[6];
+                                snprintf(linksCount, sizeof(linksCount), "%d", inode.i_links_count);
+                                strcat(linksCount, "\n");
+                                if (write(outputFD3, (void *)linksCount, sizeof(linksCount)) == -1) {
+                                    #if debug
+                                        printf("Write to output3 file failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+                                char size[11];
+                                snprintf(size, sizeof(size), "%d", inode.i_size);
+                                strcat(size, "\n");
+                                if (write(outputFD3, (void *)size, sizeof(size)) == -1) {
+                                    #if debug
+                                        printf("Write to output3 file failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+                                char uid[6];
+                                snprintf(uid, sizeof(uid), "%d", inode.i_uid);
+                                strcat(uid, "\0");
+                                if (write(outputFD3, (void *)uid, strlen(uid)) == -1) {
+                                    #if debug
+                                        printf("Write to output3 file failed\n");
                                     #endif
                                     exit(EXIT_FAILURE);
                                 }
                             }
-                            fileSize -= loopIter;
                         }
-                    } else if (j == 13) {
-                        int indirectBuffer1_p[256];
-                        
-                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
-                        read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
+                    }
+                }
+            }
+        }
+    }
 
-                        for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i ++) {
-                            if (indirectBuffer1_p[i] == 0) {
-                                continue;
-                            }
+    if (!topSecretFolderLocated) {
+        inode_no = 0;
+        for (; inode_no < super.s_inodes_per_group; inode_no++) {
+            read_inode(fd, group.bg_inode_table * BASE_OFFSET, inode_no, &inode, 256);
+            if (S_ISREG(inode.i_mode) && topSecretFolderLocated) {
+                // printf("regular file %d\n", inode_no);
+                char buffer[BASE_OFFSET];
+                lseek(fd, inode.i_block[0] * BASE_OFFSET, SEEK_SET);
+                read(fd, buffer, sizeof(buffer));
+                bool isJPG = 0; 
 
-                            int indirectBuffer2_p[256];
+                if (buffer[0] == (char)0xff &&
+                    buffer[1] == (char)0xd8 &&
+                    buffer[2] == (char)0xff &&
+                    (buffer[3] == (char)0xe0 ||
+                    buffer[3] == (char)0xe1 ||
+                    buffer[3] == (char)0xe8)) {
+                    isJPG = 1;
+                }
+                
+                if (isJPG) {
+                    // printf("JPEG\n");
+                    char inodeString[10];
+                    snprintf(inodeString, sizeof(inodeString), "%d", inode_no);
+                    char *outputFile1 = malloc((strlen(argv[2])+strlen(inodeString)+1+strlen("/file-")) * sizeof(char));
+                    strcat(outputFile1, argv[2]);
+                    strcat(outputFile1, ("/file-"));
+                    strcat(outputFile1, inodeString);
+                    strcat(outputFile1, ".jpg");
 
-                            lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
-                            read(fd, indirectBuffer2_p, sizeof(indirectBuffer2_p));
+                    int outputFD1;
+                    if ((outputFD1 = open(outputFile1, O_CREAT | O_TRUNC | O_WRONLY, S_IWUSR | S_IRUSR)) == -1) {
+                        #if debug
+                            printf("Output open failed\n");
+                        #endif
+                        exit(EXIT_FAILURE);
+                    }
+                    unsigned int fileSize = inode.i_size;
+                    for (unsigned int j = 0; /* inode.i_block[j] != 0 && */ j < 14; j++) {
+                        /* if (inode.i_block[j] == 0) {
+                            continue;
+                        } */
 
-                            for (unsigned int k = 0; k < 256 /* && indirectBuffer2_p[k] != 0 */; k ++) {
-                                if (indirectBuffer2_p[i] == 0) {
+                        unsigned int loopIter;
+
+                        if (j == 12) {
+                            int indirectBuffer1_p[256];
+                            
+                            lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                            read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
+
+                            for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i++) {
+                                /* if (indirectBuffer1_p[i] == 0) {
                                     continue;
-                                }
+                                } */
 
-                                char indirectBuffer2_d[BASE_OFFSET];
+                                char indirectBuffer1_d[BASE_OFFSET];
                                 loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
 
-                                lseek(fd, indirectBuffer2_p[k] * BASE_OFFSET, SEEK_SET);
-                                read(fd, indirectBuffer2_d, sizeof(indirectBuffer2_d));
+                                lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
+                                read(fd, indirectBuffer1_d, sizeof(indirectBuffer1_d));
 
-                                for (unsigned int h = 0; h < loopIter; h++) {
-                                    if (write(outputFD, (void *)&indirectBuffer2_d[h], sizeof(char)) == -1) {
+                                for (unsigned int k = 0; k < loopIter; k++) {
+                                    if (write(outputFD1, (void *)&indirectBuffer1_d[k], sizeof(char)) == -1) {
                                         #if debug
-                                            printf("Write to output file failed\n");
+                                            printf("Write to output1 file failed\n");
                                         #endif
                                         exit(EXIT_FAILURE);
                                     }
                                 }
                                 fileSize -= loopIter;
                             }
-                        }
-                    } else {
-                        loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+                        } else if (j == 13) {
+                            int indirectBuffer1_p[256];
+                            
+                            lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                            read(fd, indirectBuffer1_p, sizeof(indirectBuffer1_p));
 
-                        lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
-                        read(fd, buffer, sizeof(buffer));
+                            for (unsigned int i = 0; i < 256 /* && indirectBuffer1_p[i] != 0 */; i ++) {
+                                /* if (indirectBuffer1_p[i] == 0) {
+                                    continue;
+                                } */
 
-                        for (unsigned int i = 0; i < loopIter; i++) {
-                            if (write(outputFD, (void *)&buffer[i], sizeof(char)) == -1) {
-                                #if debug
-                                    printf("Write to output file failed\n");
-                                #endif
-                                exit(EXIT_FAILURE);
+                                int indirectBuffer2_p[256];
+
+                                lseek(fd, indirectBuffer1_p[i] * BASE_OFFSET, SEEK_SET);
+                                read(fd, indirectBuffer2_p, sizeof(indirectBuffer2_p));
+
+                                for (unsigned int k = 0; k < 256 /* && indirectBuffer2_p[k] != 0 */; k ++) {
+                                    /* if (indirectBuffer2_p[i] == 0) {
+                                        continue;
+                                    } */
+
+                                    char indirectBuffer2_d[BASE_OFFSET];
+                                    loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                                    lseek(fd, indirectBuffer2_p[k] * BASE_OFFSET, SEEK_SET);
+                                    read(fd, indirectBuffer2_d, sizeof(indirectBuffer2_d));
+
+                                    for (unsigned int h = 0; h < loopIter; h++) {
+                                        if (write(outputFD1, (void *)&indirectBuffer2_d[h], sizeof(char)) == -1) {
+                                            #if debug
+                                                printf("Write to output1 file failed\n");
+                                            #endif
+                                            exit(EXIT_FAILURE);
+                                        }
+                                    }
+                                    fileSize -= loopIter;
+                                }
                             }
+                        } else {
+                            loopIter = (fileSize > BASE_OFFSET)? BASE_OFFSET : fileSize;
+
+                            lseek(fd, inode.i_block[j] * BASE_OFFSET, SEEK_SET);
+                            read(fd, buffer, sizeof(buffer));
+
+                            for (unsigned int i = 0; i < loopIter; i++) {
+                                if (write(outputFD1, (void *)&buffer[i], sizeof(char)) == -1) {
+                                    #if debug
+                                        printf("Write to output1 file failed\n");
+                                    #endif
+                                    exit(EXIT_FAILURE);
+                                }
+                            }
+                            fileSize -= loopIter;
                         }
-                        fileSize -= loopIter;
                     }
                 }
             }
