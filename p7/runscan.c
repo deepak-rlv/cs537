@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
                     strncpy(name, dentry->name, name_len);
                     name[name_len] = '\0';
 
-                    // printf("Entry name is -- %s -- %d --\n", name, dentry->inode);
+                    printf("Entry name is -- %s -- %d --\n", name, dentry->inode);
 
                     // if (strcmp("top_secret", name) == 0) {
                     //     topSecretInode = dentry->inode;
@@ -332,7 +332,7 @@ int main(int argc, char **argv) {
                                 }
                                 char uid[6];
                                 snprintf(uid, sizeof(uid), "%d", inode_regfile.i_uid);
-                                strcat(uid, "\n");
+                                strcat(uid, "\0");
                                 if (write(outputFD3, (void *)uid, strlen(uid)) == -1) {
                                     #if debug
                                         printf("Write to output3 file failed\n");
