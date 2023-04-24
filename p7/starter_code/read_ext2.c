@@ -14,6 +14,7 @@ unsigned int num_groups = 0;
 unsigned int inodes_per_group = 0;
 
 
+
 int debug = 1;          //turn on/off debug prints
 
 
@@ -99,36 +100,15 @@ static inline int has_superblock_copy(int ngroup)
 		isPowerOf(ngroup, 7) ;
 }
 
-/* read the first super block; for this project, you will only deal with the first block group */
+/* read the super block copy at group 0 */
 int read_super_block( int                      fd,        /* the disk image file descriptor */
-					   int                      ngroup,        /* which block group to access */
 					   struct ext2_super_block *super      /* where to put the super block */
 						)
 {
-	// The groups that have copies of a super block are 0, 1 and powers of 3, 5 and 7
-    if (!has_superblock_copy(ngroup))
-		{
-			if (debug)
-				printf("this block does not contain a super block copy");
-			return -1;
-		}
-
-		/*int num_no_super_copy_blocks = 0;
-		num_no_super_copy_blocks+=(ngroup > 0 ? 1 : 0);
-		num_no_super_copy_blocks+=(ngroup > 1 ? 1 : 0);
-		num_no_super_copy_blocks+=powersBelow(ngroup,3);
-		num_no_super_copy_blocks+=powersBelow(ngroup,5);
-		num_no_super_copy_blocks+=powersBelow(ngroup,7);*/
-    
-		lseek(fd, BLOCK_OFFSET( (blocks_per_group * ngroup + has_superblock_copy(ngroup)) ), SEEK_SET);
+		lseek(fd, BASE_OFFSET, SEEK_SET);
 	    //lseek(fd, BASE_OFFSET + BLOCK_OFFSET(blocks_per_group * ngroup), SEEK_SET);        /* position head above super-block */
         read(fd, super, sizeof(struct ext2_super_block));              /* read super-block */
 		
-		if (!has_superblock_copy(ngroup)) {
-            if (debug)
-				printf("Block %d does not contain a super block copy\n", ngroup);
-			return -1;
-        }
         if (super->s_magic != EXT2_SUPER_MAGIC) {
                 fprintf(stderr, "read_super_block: Not a Ext2 filesystem\n");
                 exit(1);
@@ -167,59 +147,53 @@ int read_super_block( int                      fd,        /* the disk image file
 		return 0;
 }
 
-/* Read the first group-descriptor in the first block group; you will not be tested with a disk image with more than one block group */
-int read_group_desc( int                      fd,        /* the disk image file descriptor */
-					  int                      ngroup,        /* which block group to access */
-		      struct ext2_group_desc *group     /* where to put the group-descriptor */
+/* Read the group-descriptor table in the first block group */
+int read_group_descs( int                      fd,        /* the disk image file descriptor */
+				      struct ext2_group_desc *groups,      /* where to put the group-descriptor table; it takes one page */
+					  int					  num_groups  /* how many groups exist in the file system; calculated using the #blocks in the fs image divided by blocks per group  */
 					)
 {
-		printf("Block %d: %d %d\n", ngroup, (blocks_per_group * ngroup + 2), BLOCK_OFFSET((blocks_per_group * ngroup + 2)));
-		if (!has_blockdescriptor_copy(ngroup))
-		{
-			if (debug)
-				printf("Block %d does not contain a group descriptor copy\n", ngroup);
-			return -1;
-		}
-		else
-		{
-			lseek(fd, BLOCK_OFFSET( (blocks_per_group * ngroup + has_blockdescriptor_copy(ngroup) + has_superblock_copy(ngroup)) ), SEEK_SET);
-		}
-        read(fd, group, sizeof(struct ext2_group_desc));
+		lseek(fd, BLOCK_OFFSET( BASE_OFFSET + 1 ), SEEK_SET);	// super block is one block
+		
+		read(fd, groups, num_groups * sizeof(struct ext2_group_desc) );
+
 
 		if (debug)
 		{
-			printf("Reading group-descriptor from device:\n"
-				   "Blocks bitmap block: %u\n"
-				   "Inodes bitmap block: %u\n"
-				   "Inodes table block : %u\n"
-				   "Free blocks count  : %u\n"
-				   "Free inodes count  : %u\n"
-				   "Directories count  : %u\n"
-				   ,
-				   group->bg_block_bitmap,
-				   group->bg_inode_bitmap,
-				   group->bg_inode_table,
-				   group->bg_free_blocks_count,
-				   group->bg_free_inodes_count,
-				   group->bg_used_dirs_count);    /* directories count */
+			for (int i = 0; i < num_groups; i++) {
+				struct ext2_group_desc group = groups[i];
+				printf("Reading group-descriptor from device:\n"
+						"Blocks bitmap block: %u\n"
+						"Inodes bitmap block: %u\n"
+						"Inodes table block : %u\n"
+						"Free blocks count  : %u\n"
+						"Free inodes count  : %u\n"
+						"Directories count  : %u\n"
+						,
+						group.bg_block_bitmap,
+						group.bg_inode_bitmap,
+						group.bg_inode_table,
+						group.bg_free_blocks_count,
+						group.bg_free_inodes_count,
+						group.bg_used_dirs_count);    /* directories count */
+			}
+			
 		}
+		return 0;
 }
 
-/* calculate the start address of the inode table in the first group */
-off_t locate_inode_table( int ngroup, const struct ext2_group_desc *group      /* the first group-descriptor */
+/* calculate the start address of the inode table in the nth group */
+off_t locate_inode_table( int ngroup, const struct ext2_group_desc *groups      /* the group-descriptor table */
 							    )
 {
-	return BLOCK_OFFSET( (group->bg_inode_table + blocks_per_group * ngroup - !has_superblock_copy(ngroup) - !has_blockdescriptor_copy(ngroup)) );
-	// int no_superblock = (ngroup != 0 && ngroup != 1 && !isPowerOf(ngroup, 3) && !isPowerOf(ngroup, 5) && !isPowerOf(ngroup, 7)) ? 1 : 0;
-	// 	int no_group_desc = ngroup > 1 ? 1 : 0;
-	// 	return BLOCK_OFFSET( (group->bg_inode_table - no_superblock - no_group_desc + blocks_per_group * ngroup) );
+	return BLOCK_OFFSET( groups[ngroup].bg_inode_table );
 }
 
 /* calculate the start address of the data blocks in the first group */
-off_t locate_data_blocks( int ngroup, const struct ext2_group_desc *group      /* the first group-descriptor */
+off_t locate_data_blocks( int ngroup, const struct ext2_group_desc *groups      /* the first group-descriptor */
 							    )
 {
-		return BLOCK_OFFSET( group->bg_inode_table + itable_blocks + blocks_per_group * ngroup );
+	return BLOCK_OFFSET( groups[ngroup].bg_inode_table + itable_blocks );
 }
 
 void read_inode(fd, offset, inode_no, inode, s_inode_size)

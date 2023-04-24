@@ -24,23 +24,22 @@ void ext2_read_init(  int                      fd);
 
 /* read the specified super block */
 int read_super_block( int                      fd,        /* the disk image file descriptor */
-					  int                      ngroup,    /* which block group to access */
 					  struct ext2_super_block *super      /* where to put the super block */
 					  );
 
 /* Read the group-descriptor in the specified block group */
-int read_group_desc( int                      fd,        /* the disk image file descriptor */
-					  int                      ngroup,    /* which block group to access */
-					  struct ext2_group_desc  *group      /* where to put the group-descriptor */
+int read_group_descs( int                      fd,        /* the disk image file descriptor */
+					  struct ext2_group_desc  *groups,      /* where to put the group-descriptor table */
+					  int					  num_groups  /* how many groups exist in the file system; calculated using the #blocks and blocks per group in the super block */
 					  );
 
 /* calculate the start address of the inode table in the specified group */
 off_t locate_inode_table(int                           ngroup,      /* which block group to access */
-					     const struct ext2_group_desc *group);      /* the first group-descriptor */
+					     const struct ext2_group_desc *groups);      /* the first group-descriptor */
 
 /* calculate the start address of the data blocks in the specified group */
 off_t locate_data_blocks(int                           ngroup,      /* which block group to access */
-					     const struct ext2_group_desc *group);      /* the first group-descriptor */
+					     const struct ext2_group_desc *groups);      /* the first group-descriptor */
 
 /* read an inode with specified inode number and group number */
 void read_inode( int                           fd,        /* the disk image file descriptor */
