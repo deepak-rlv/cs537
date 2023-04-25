@@ -8,7 +8,7 @@ Submitted by Deepak Charan Logavaseekaran (logavaseekar@wisc.edu)
 <br>
 **Wisc ID:** 908 495 9841
 <br>
-**Status:** All tests passing 
+**Status:** Tests 1, 2, 3, 4 & 7 passing
 <br>
 **Section:** Prof. Mike Swift's
 <br>
